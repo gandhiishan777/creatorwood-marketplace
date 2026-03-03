@@ -59,7 +59,18 @@ export default async function SettingsPage({
 
         <Separator className="my-10" />
 
-        <PortfolioManager items={portfolioItems ?? []} />
+        {profile?.is_discoverable ? (
+          <PortfolioManager items={portfolioItems ?? []} />
+        ) : (
+          <div className="rounded-lg border border-dashed p-6 text-center">
+            <h2 className="text-lg font-semibold tracking-tight">Portfolio</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your portfolio will be visible to clients once you&apos;re available
+              for hire. Toggle &ldquo;Available for Hire&rdquo; above and save your
+              profile to start adding work.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

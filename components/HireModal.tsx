@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from "react"
 import { useFormStatus } from "react-dom"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Loader2Icon } from "lucide-react"
 import { requestConnection } from "@/app/actions/connection"
@@ -24,6 +24,7 @@ interface HireModalProps {
   talentId: string
   talentName: string
   glowing?: boolean
+  isAuthenticated: boolean
 }
 
 const initialState = { error: null }
@@ -44,9 +45,17 @@ function SubmitButton() {
   )
 }
 
-export function HireModal({ talentId, talentName, glowing = false }: HireModalProps) {
+export function HireModal({ talentId, talentName, glowing = false, isAuthenticated }: HireModalProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [state, formAction] = useActionState(requestConnection, initialState)
+
+  function handleTriggerClick(e: React.MouseEvent) {
+    if (!isAuthenticated) {
+      e.preventDefault()
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
+    }
+  }
 
   useEffect(() => {
     if (state.error === null && state !== initialState) {
@@ -62,6 +71,7 @@ export function HireModal({ talentId, talentName, glowing = false }: HireModalPr
       <DialogTrigger asChild>
         <Button
           size="lg"
+          onClick={handleTriggerClick}
           className={
             glowing
               ? "w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 border-0"

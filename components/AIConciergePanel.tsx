@@ -5,13 +5,12 @@ import Link from "next/link"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { motion } from "framer-motion"
-import { SendHorizonalIcon, Sparkles, Star } from "lucide-react"
+import { SendHorizonalIcon, Sparkles, Star, X } from "lucide-react"
 import { MOTION, fadeUp } from "@/lib/motion"
 import type { UIMessage } from "ai"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sheet,
   SheetContent,
@@ -116,6 +115,11 @@ export function AIConciergePanel({
   const { messages, sendMessage, setMessages, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai-chat" }),
     messages: [welcomeMessage],
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.toolName === "showCreatorCards") {
+        return "Cards displayed to user."
+      }
+    },
   })
 
   const isLoading = status === "streaming" || status === "submitted"
@@ -152,22 +156,33 @@ export function AIConciergePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        showCloseButton
+        showCloseButton={false}
         className="flex w-full flex-col overflow-hidden sm:max-w-[450px]"
       >
         <SheetHeader className="border-b border-brand/20 pb-3">
-          <SheetTitle className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-full bg-brand/10">
-              <Sparkles className="size-4 text-brand" />
-            </div>
-            AI Casting Assistant
-          </SheetTitle>
-          <SheetDescription>
-            Describe your project and I&apos;ll find the right creator.
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-full bg-brand/10">
+                <Sparkles className="size-4 text-brand" />
+              </div>
+              AI Casting Assistant
+            </SheetTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="size-8 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+              <span className="sr-only">Close chat</span>
+            </Button>
+          </div>
+          <SheetDescription className="sr-only">
+            AI casting assistant chat panel
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 -mx-4 px-4">
+        <div className="flex-1 min-h-0 overflow-y-auto -mx-4 px-4">
           <div className="flex flex-col gap-4 py-4">
             {messages.map((message) => {
               const isUser = message.role === "user"
@@ -279,7 +294,7 @@ export function AIConciergePanel({
 
             <div ref={bottomRef} />
           </div>
-        </ScrollArea>
+        </div>
 
         <form
           onSubmit={handleSubmit}

@@ -48,6 +48,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound()
   }
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const savedIds = await getSavedCreatorIds()
   const isSaved = savedIds.has(id)
 
@@ -229,6 +231,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               <GlowButton
                 talentId={profile.id}
                 talentName={profile.display_name}
+                isAuthenticated={!!user}
               />
             </div>
           </AnimateOnScroll>

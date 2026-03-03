@@ -6,14 +6,15 @@ import { usePresence } from "@/components/PresenceProvider"
 interface GlowButtonProps {
   talentId: string
   talentName: string
+  isAuthenticated: boolean
 }
 
-export function GlowButton({ talentId, talentName }: GlowButtonProps) {
+export function GlowButton({ talentId, talentName, isAuthenticated }: GlowButtonProps) {
   return (
     <div className="relative w-full">
       <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 opacity-60 blur-md animate-glow" />
       <div className="relative">
-        <HireModal talentId={talentId} talentName={talentName} glowing />
+        <HireModal talentId={talentId} talentName={talentName} glowing isAuthenticated={isAuthenticated} />
       </div>
     </div>
   )

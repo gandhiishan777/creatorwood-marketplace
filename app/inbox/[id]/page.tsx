@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ChatInterface, type MessageWithSender } from "@/components/ChatInterface"
 import { ReviewPrompt } from "@/components/ReviewPrompt"
-import { updateConnectionStatus, markConnectionRead } from "@/app/actions/inbox"
+import { updateConnectionStatus, cancelConnection } from "@/app/actions/inbox"
+import { MarkReadOnMount } from "@/components/MarkReadOnMount"
 import { createClient } from "@/utils/supabase/server"
 import type { Tables } from "@/types/supabase"
 
@@ -95,8 +96,6 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
     redirect("/inbox")
   }
 
-  await markConnectionRead(id)
-
   const { data: messagesRaw } = await supabase
     .from("messages")
     .select(`*, sender:profiles!messages_sender_id_fkey(display_name, avatar_url)`)
@@ -133,9 +132,15 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
     "use server"
     await updateConnectionStatus(id, "completed")
   }
+  async function cancelAction() {
+    "use server"
+    const result = await cancelConnection(id)
+    if (!result.error) redirect("/inbox")
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <MarkReadOnMount connectionId={id} />
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3">
@@ -171,6 +176,17 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
             </div>
           )}
 
+          {/* Client can cancel a pending request */}
+          {connection.status === "pending" && isClient && (
+            <div className="flex gap-2">
+              <form action={cancelAction}>
+                <Button type="submit" variant="destructive" size="sm">
+                  Cancel Request
+                </Button>
+              </form>
+            </div>
+          )}
+
           {/* Either party can mark completed */}
           {connection.status === "active" && (isClient || isTalent) && (
             <div className="flex gap-2">
@@ -185,8 +201,8 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
 
         <Separator className="mb-6" />
 
-        {/* Review prompt for completed connections */}
-        {connection.status === "completed" && (
+        {/* Review prompt for completed connections (client only) */}
+        {connection.status === "completed" && isClient && (
           <ReviewSection
             connectionId={id}
             userId={user.id}

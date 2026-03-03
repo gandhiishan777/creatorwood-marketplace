@@ -41,14 +41,11 @@ export async function submitReview(
     return { error: "Can only review completed projects.", success: false }
   }
 
-  const isClient = connection.client_id === user.id
-  const isTalent = connection.talent_id === user.id
-
-  if (!isClient && !isTalent) {
-    return { error: "Not authorized.", success: false }
+  if (connection.client_id !== user.id) {
+    return { error: "Only the client can leave a review.", success: false }
   }
 
-  const targetId = isClient ? connection.talent_id : connection.client_id
+  const targetId = connection.talent_id
 
   // Check for existing review
   const { data: existing } = await supabase

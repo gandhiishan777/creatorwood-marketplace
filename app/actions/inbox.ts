@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/utils/supabase/server"
+import { createClient, createAdminClient } from "@/utils/supabase/server"
 import type { TablesInsert } from "@/types/supabase"
 
 export async function sendMessage(
@@ -88,6 +88,40 @@ export async function updateConnectionStatus(
 
   revalidatePath("/inbox")
   revalidatePath(`/inbox/${connectionId}`)
+  return { error: null }
+}
+
+export async function cancelConnection(
+  connectionId: string
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) return { error: "Not authenticated." }
+
+  const { data: connection } = await supabase
+    .from("connections")
+    .select("client_id, status")
+    .eq("id", connectionId)
+    .single()
+
+  if (!connection) return { error: "Connection not found." }
+  if (connection.client_id !== user.id) return { error: "Only the sender can cancel a request." }
+  if (connection.status !== "pending") return { error: "Only pending requests can be cancelled." }
+
+  // Use admin client to bypass RLS (auth + ownership already verified above)
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from("connections")
+    .delete()
+    .eq("id", connectionId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/inbox")
   return { error: null }
 }
 

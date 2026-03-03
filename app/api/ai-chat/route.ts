@@ -39,9 +39,12 @@ GUIDELINES:
             .array(z.string())
             .describe("Array of creator profile IDs to display as cards"),
         }),
+        execute: async ({ profileIds }) => ({
+          displayed: profileIds,
+        }),
       }),
     },
-    stopWhen: stepCountIs(1),
+    stopWhen: stepCountIs(3),
   })
 
   return result.toUIMessageStreamResponse()
