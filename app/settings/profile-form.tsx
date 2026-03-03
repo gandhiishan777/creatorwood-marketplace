@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { getInitials } from "@/lib/utils";
 import type { Tables } from "@/types/supabase";
 
 type Profile = Tables<"profiles">;
@@ -18,14 +19,6 @@ type Profile = Tables<"profiles">;
 interface ProfileFormProps {
   profile: Partial<Profile> | null;
   userId: string;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

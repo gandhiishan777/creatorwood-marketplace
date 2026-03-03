@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
+import { getInitials } from "@/lib/utils"
 import type { Tables } from "@/types/supabase"
 
 export type MessageWithSender = Tables<"messages"> & {
@@ -21,14 +22,6 @@ interface ChatInterfaceProps {
   currentUserId: string
   currentUser: Pick<Tables<"profiles">, "display_name" | "avatar_url">
   otherUser: Pick<Tables<"profiles">, "display_name" | "avatar_url">
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("")
 }
 
 function formatTime(timestamp: string | null) {

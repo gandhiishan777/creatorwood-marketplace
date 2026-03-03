@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { Separator } from "@/components/ui/separator";
 import { ProfileForm } from "./profile-form";
+import { PortfolioManager } from "./portfolio-manager";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -13,11 +15,14 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: portfolioItems }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase
+      .from("portfolio_items")
+      .select("*")
+      .eq("profile_id", user.id)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   return (
     <main className="min-h-screen bg-background">
@@ -31,6 +36,10 @@ export default async function SettingsPage() {
           </p>
         </div>
         <ProfileForm profile={profile} userId={user.id} />
+
+        <Separator className="my-10" />
+
+        <PortfolioManager items={portfolioItems ?? []} />
       </div>
     </main>
   );

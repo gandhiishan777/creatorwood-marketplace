@@ -143,6 +143,50 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          profile_id: string
+          sort_order: number
+          thumbnail_url: string | null
+          title: string | null
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          profile_id: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          profile_id?: string
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_items_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -197,7 +241,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profile_ratings: {
+        Row: {
+          profile_id: string
+          avg_rating: number
+          review_count: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

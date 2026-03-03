@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getInitials } from "@/lib/utils"
 import type { Tables } from "@/types/supabase"
 
 export type ConnectionWithProfiles = Tables<"connections"> & {
@@ -25,14 +26,6 @@ const STATUS_BADGE: Record<
   active: { label: "Active", variant: "default" },
   declined: { label: "Declined", variant: "secondary" },
   completed: { label: "Completed", variant: "secondary" },
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("")
 }
 
 function ConnectionCard({

@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation"
+import { Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ChatInterface, type MessageWithSender } from "@/components/ChatInterface"
+import { ReviewPrompt } from "@/components/ReviewPrompt"
 import { updateConnectionStatus } from "@/app/actions/inbox"
 import { createClient } from "@/utils/supabase/server"
 import type { Tables } from "@/types/supabase"
@@ -19,6 +21,50 @@ const STATUS_BADGE: Record<
   active: { label: "Active", variant: "default" },
   declined: { label: "Declined", variant: "secondary" },
   completed: { label: "Completed", variant: "secondary" },
+}
+
+async function ReviewSection({
+  connectionId,
+  userId,
+  otherName,
+}: {
+  connectionId: string
+  userId: string
+  otherName: string
+}) {
+  const supabase = await createClient()
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id, rating")
+    .eq("connection_id", connectionId)
+    .eq("reviewer_id", userId)
+    .maybeSingle()
+
+  if (existingReview) {
+    return (
+      <div className="mb-6 flex items-center gap-3 rounded-xl border bg-card p-4">
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <Star
+              key={s}
+              className={`size-4 ${
+                s <= existingReview.rating
+                  ? "fill-amber-400 text-amber-400"
+                  : "fill-transparent text-muted-foreground/30"
+              }`}
+            />
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground">You reviewed this project</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mb-6">
+      <ReviewPrompt connectionId={connectionId} otherName={otherName} />
+    </div>
+  )
 }
 
 export default async function InboxRoomPage({ params }: RoomPageProps) {
@@ -73,9 +119,18 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
     variant: "outline" as const,
   }
 
-  const acceptAction = updateConnectionStatus.bind(null, id, "active")
-  const declineAction = updateConnectionStatus.bind(null, id, "declined")
-  const completeAction = updateConnectionStatus.bind(null, id, "completed")
+  async function acceptAction() {
+    "use server"
+    await updateConnectionStatus(id, "active")
+  }
+  async function declineAction() {
+    "use server"
+    await updateConnectionStatus(id, "declined")
+  }
+  async function completeAction() {
+    "use server"
+    await updateConnectionStatus(id, "completed")
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -127,6 +182,15 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
         </div>
 
         <Separator className="mb-6" />
+
+        {/* Review prompt for completed connections */}
+        {connection.status === "completed" && (
+          <ReviewSection
+            connectionId={id}
+            userId={user.id}
+            otherName={otherUserProfile.display_name}
+          />
+        )}
 
         <ChatInterface
           initialMessages={(messagesRaw ?? []) as MessageWithSender[]}
