@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ExternalLink, Play, X } from "lucide-react"
+import { MOTION } from "@/lib/motion"
 import type { Tables } from "@/types/supabase"
 
 type PortfolioItem = Tables<"portfolio_items">
 
 interface PortfolioGalleryProps {
   items: PortfolioItem[]
+  creatorName?: string
 }
 
 function Lightbox({
@@ -18,17 +20,38 @@ function Lightbox({
   item: PortfolioItem
   onClose: () => void
 }) {
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    closeRef.current?.focus()
+    document.body.style.overflow = "hidden"
+
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", handleKey)
+    return () => {
+      document.removeEventListener("keydown", handleKey)
+      document.body.style.overflow = ""
+    }
+  }, [onClose])
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title ?? "Portfolio piece lightbox"}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
         onClick={onClose}
       >
         <button
+          ref={closeRef}
           onClick={onClose}
+          aria-label="Close lightbox"
           className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
         >
           <X className="size-5" />
@@ -38,7 +61,7 @@ function Lightbox({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          transition={MOTION.spring}
           className="w-full max-w-4xl"
           onClick={(e) => e.stopPropagation()}
         >
@@ -73,12 +96,19 @@ function Lightbox({
 function GalleryItem({
   item,
   onClick,
-  featured,
+  hero,
+  creatorName,
 }: {
   item: PortfolioItem
   onClick: () => void
-  featured?: boolean
+  hero?: boolean
+  creatorName?: string
 }) {
+  const [loaded, setLoaded] = useState(false)
+  const onLoad = useCallback(() => setLoaded(true), [])
+
+  const altText = item.title ?? (creatorName ? `${creatorName}'s ${item.type === "video_embed" ? "video" : "work"}` : "Portfolio piece")
+
   if (item.type === "link") {
     return (
       <a
@@ -104,17 +134,21 @@ function GalleryItem({
 
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ scale: hero ? 1 : 1.02 }}
+      transition={MOTION.spring}
       onClick={onClick}
-      className={`group relative cursor-pointer overflow-hidden rounded-xl ${
-        featured ? "aspect-video" : "aspect-[4/3]"
+      className={`group relative cursor-pointer overflow-hidden ${
+        hero ? "aspect-[16/10] rounded-none" : item.type === "video_embed" ? "aspect-video rounded-xl" : "rounded-xl"
       }`}
     >
+      {!loaded && (
+        <div className="absolute inset-0 animate-shimmer" />
+      )}
       <img
         src={item.thumbnail_url ?? item.url}
-        alt={item.title ?? "Portfolio piece"}
-        className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+        alt={altText}
+        onLoad={onLoad}
+        className={`size-full object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
       />
 
       {item.type === "video_embed" && (
@@ -125,10 +159,10 @@ function GalleryItem({
         </div>
       )}
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      {/* Persistent gradient on hero, hover-only on others */}
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${hero ? "opacity-40 group-hover:opacity-70" : "opacity-0 group-hover:opacity-100"}`} />
       {item.title && (
-        <p className="absolute bottom-3 left-3 right-3 truncate text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <p className={`absolute bottom-3 left-3 right-3 truncate text-sm font-medium text-white transition-opacity duration-300 ${hero ? "opacity-80 group-hover:opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           {item.title}
         </p>
       )}
@@ -136,7 +170,7 @@ function GalleryItem({
   )
 }
 
-export function PortfolioGallery({ items }: PortfolioGalleryProps) {
+export function PortfolioGallery({ items, creatorName }: PortfolioGalleryProps) {
   const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null)
 
   if (items.length === 0) {
@@ -150,25 +184,26 @@ export function PortfolioGallery({ items }: PortfolioGalleryProps) {
   }
 
   const [hero, ...rest] = items
-  const clickableItems = items.filter((i) => i.type !== "link")
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        {/* Hero piece — full width */}
+      <div className="flex flex-col gap-3 overflow-hidden rounded-2xl">
+        {/* Hero piece — full width, dramatic */}
         <GalleryItem
           item={hero}
-          featured
+          hero
+          creatorName={creatorName}
           onClick={() => hero.type !== "link" && setLightboxItem(hero)}
         />
 
-        {/* Remaining items in a masonry-ish 2-column grid */}
+        {/* Remaining items in CSS columns masonry */}
         {rest.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="columns-2 gap-3 px-1 [&>*]:mb-3 [&>*]:break-inside-avoid">
             {rest.map((item) => (
               <GalleryItem
                 key={item.id}
                 item={item}
+                creatorName={creatorName}
                 onClick={() => item.type !== "link" && setLightboxItem(item)}
               />
             ))}

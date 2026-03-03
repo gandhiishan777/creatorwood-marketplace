@@ -70,13 +70,13 @@ export function CastingSearch() {
           onFocus={() => { isFocusedRef.current = true }}
           onBlur={() => { isFocusedRef.current = false }}
           placeholder="Describe your project (e.g., 'I need a Sora expert for a 30s dream sequence')..."
-          className="h-14 w-full rounded-xl border-2 border-white/15 bg-card/50 pl-12 pr-12 text-sm text-foreground shadow-inner transition-colors placeholder:text-muted-foreground/60 focus:border-violet-500/50 focus:outline-none"
+          className="h-14 w-full rounded-xl border-2 border-white/15 bg-card/50 pl-12 pr-12 text-sm text-foreground shadow-inner transition-colors placeholder:text-muted-foreground/60 focus:border-brand/50 focus:outline-none"
         />
 
         {/* Sparkles icon — right side */}
         <Sparkles
           className={`absolute right-4 top-1/2 size-5 -translate-y-1/2 transition-colors ${
-            isPending ? "text-violet-400 animate-pulse" : "text-muted-foreground/40"
+            isPending ? "text-brand animate-pulse" : "text-muted-foreground/40"
           }`}
         />
 
@@ -86,7 +86,7 @@ export function CastingSearch() {
             isPending ? "opacity-100" : "opacity-0"
           }`}
         >
-          <div className="h-full w-full animate-[gradient-slide_1.5s_linear_infinite] bg-gradient-to-r from-transparent via-violet-500 to-transparent bg-[length:200%_100%]" />
+          <div className="h-full w-full animate-[gradient-slide_1.5s_linear_infinite] bg-gradient-to-r from-transparent via-brand to-transparent bg-[length:200%_100%]" />
         </div>
       </div>
 

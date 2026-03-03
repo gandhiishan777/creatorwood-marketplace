@@ -18,34 +18,40 @@ export type Database = {
         Row: {
           budget_estimate: string | null
           client_id: string
+          client_last_read_at: string | null
           created_at: string | null
           id: string
           initial_pitch: string
           project_title: string
           status: string
           talent_id: string
+          talent_last_read_at: string | null
           updated_at: string | null
         }
         Insert: {
           budget_estimate?: string | null
           client_id: string
+          client_last_read_at?: string | null
           created_at?: string | null
           id?: string
           initial_pitch: string
           project_title: string
           status?: string
           talent_id: string
+          talent_last_read_at?: string | null
           updated_at?: string | null
         }
         Update: {
           budget_estimate?: string | null
           client_id?: string
+          client_last_read_at?: string | null
           created_at?: string | null
           id?: string
           initial_pitch?: string
           project_title?: string
           status?: string
           talent_id?: string
+          talent_last_read_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -233,6 +239,42 @@ export type Database = {
           {
             foreignKeyName: "reviews_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_creators: {
+        Row: {
+          id: string
+          user_id: string
+          creator_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          creator_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          creator_id?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_creators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_creators_creator_id_fkey"
+            columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

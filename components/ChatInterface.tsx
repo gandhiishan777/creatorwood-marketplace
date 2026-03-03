@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react"
 import { motion } from "framer-motion"
 import { SendHorizonalIcon } from "lucide-react"
+import { MOTION } from "@/lib/motion"
 import { createClient } from "@/utils/supabase/client"
 import { sendMessage } from "@/app/actions/inbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -178,7 +179,7 @@ export function ChatInterface({
                   key={message.id}
                   initial={isNew ? { opacity: 0, y: 16 } : false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  transition={MOTION.duration}
                   className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : "flex-row"}`}
                 >
                   <Avatar className="size-7 shrink-0">

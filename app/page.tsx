@@ -3,6 +3,8 @@ import { ArrowRight, Users, Briefcase, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FeaturedShowcase } from "@/components/FeaturedShowcase"
 import { FeaturedCreators } from "@/components/FeaturedCreators"
+import { AnimateOnScroll } from "@/components/AnimateOnScroll"
+import { AnimatedCounter } from "@/components/AnimatedCounter"
 import { createClient } from "@/utils/supabase/server"
 
 export default async function LandingPage() {
@@ -62,7 +64,14 @@ export default async function LandingPage() {
       .eq("status", "completed"),
   ])
 
-  const hasShowcase = showcaseItems && showcaseItems.length > 0
+  type ShowcaseItem = {
+    thumbnail_url: string | null
+    title: string | null
+    profile_id: string
+    profiles: { display_name: string; avatar_url: string | null }
+  }
+  const typedShowcase = (showcaseItems ?? []) as unknown as ShowcaseItem[]
+  const hasShowcase = typedShowcase.length > 0
   const hasCreators = featuredCreators.length > 0
 
   return (
@@ -74,7 +83,7 @@ export default async function LandingPage() {
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.10) 0%, transparent 70%)",
+              "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in oklch, var(--brand) 15%, transparent) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, color-mix(in oklch, var(--brand) 10%, transparent) 0%, transparent 70%)",
           }}
         />
         <div
@@ -90,14 +99,14 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className={`grid items-center gap-12 ${hasShowcase ? "lg:grid-cols-2" : ""}`}>
             {/* Left: Copy */}
-            <div className={`${hasShowcase ? "" : "mx-auto max-w-3xl text-center"}`}>
-              <div className="mb-6 inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-400 backdrop-blur-sm">
+            <AnimateOnScroll className={`${hasShowcase ? "" : "mx-auto max-w-3xl text-center"}`}>
+              <div className="mb-6 inline-flex items-center rounded-full border border-brand/30 bg-brand-muted px-4 py-1.5 text-sm text-brand backdrop-blur-sm">
                 The AI Creator Marketplace
               </div>
 
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="font-display text-5xl tracking-tight sm:text-6xl lg:text-7xl">
                 Hire the World&apos;s{" "}
-                <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-brand via-brand/80 to-brand/60 bg-clip-text text-transparent">
                   Best AI Creators
                 </span>
               </h1>
@@ -111,7 +120,7 @@ export default async function LandingPage() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button
                   size="lg"
-                  className="h-12 px-8 bg-indigo-600 hover:bg-indigo-500 text-white text-base font-semibold shadow-lg shadow-indigo-900/40"
+                  className="h-12 px-8 bg-brand hover:bg-brand/90 text-brand-foreground text-base font-semibold shadow-lg shadow-brand/40"
                   asChild
                 >
                   <Link href="/discover">
@@ -128,44 +137,20 @@ export default async function LandingPage() {
                   <Link href="/login">Join as a Creator</Link>
                 </Button>
               </div>
-            </div>
+            </AnimateOnScroll>
 
             {/* Right: Portfolio Showcase */}
             {hasShowcase && (
-              <div className="hidden lg:block">
-                <FeaturedShowcase
-                  items={
-                    (showcaseItems as unknown as Array<{
-                      thumbnail_url: string | null
-                      title: string | null
-                      profile_id: string
-                      profiles: {
-                        display_name: string
-                        avatar_url: string | null
-                      }
-                    }>) ?? []
-                  }
-                />
-              </div>
+              <AnimateOnScroll delay={0.1} className="hidden lg:block">
+                <FeaturedShowcase items={typedShowcase} />
+              </AnimateOnScroll>
             )}
           </div>
 
           {/* Mobile showcase — below hero on small screens */}
           {hasShowcase && (
             <div className="mt-12 lg:hidden">
-              <FeaturedShowcase
-                items={
-                  (showcaseItems as unknown as Array<{
-                    thumbnail_url: string | null
-                    title: string | null
-                    profile_id: string
-                    profiles: {
-                      display_name: string
-                      avatar_url: string | null
-                    }
-                  }>) ?? []
-                }
-              />
+              <FeaturedShowcase items={typedShowcase} />
             </div>
           )}
         </div>
@@ -174,13 +159,13 @@ export default async function LandingPage() {
       {/* Featured Creators */}
       {hasCreators && (
         <section className="px-4 py-16">
-          <div className="mx-auto max-w-7xl">
+          <AnimateOnScroll className="mx-auto max-w-7xl">
             <div className="mb-8 flex items-end justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-widest text-indigo-400">
+                <p className="text-sm font-semibold uppercase tracking-widest text-brand">
                   Featured Creators
                 </p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+                <h2 className="mt-2 font-display text-3xl tracking-tight sm:text-4xl">
                   Meet the talent
                 </h2>
               </div>
@@ -192,67 +177,73 @@ export default async function LandingPage() {
               </Button>
             </div>
             <FeaturedCreators creators={featuredCreators} />
-          </div>
+          </AnimateOnScroll>
         </section>
       )}
 
       {/* Stats */}
-      <section className="border-y px-4 py-14">
-        <div className="mx-auto max-w-4xl">
+      <section className="relative border-y px-4 py-14 overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background: "radial-gradient(ellipse 50% 70% at 50% 50%, var(--brand-muted) 0%, transparent 70%)",
+          }}
+        />
+        <AnimateOnScroll className="mx-auto max-w-4xl">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             <div className="flex flex-col items-center text-center">
-              <Users className="mb-2 size-5 text-indigo-400" />
-              <p className="text-3xl font-bold">{creatorCount ?? 0}</p>
+              <Users className="mb-2 size-5 text-brand" />
+              <p className="text-3xl font-bold"><AnimatedCounter target={creatorCount ?? 0} /></p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {(creatorCount ?? 0) === 1 ? "Creator" : "Creators"}
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <Briefcase className="mb-2 size-5 text-indigo-400" />
-              <p className="text-3xl font-bold">{projectCount ?? 0}</p>
+              <Briefcase className="mb-2 size-5 text-brand" />
+              <p className="text-3xl font-bold"><AnimatedCounter target={projectCount ?? 0} /></p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {(projectCount ?? 0) === 1 ? "Project Completed" : "Projects Completed"}
               </p>
             </div>
             <div className="col-span-2 flex flex-col items-center text-center sm:col-span-1">
-              <Star className="mb-2 size-5 text-indigo-400" />
+              <Star className="mb-2 size-5 text-brand" />
               <p className="text-3xl font-bold">Direct</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 No middlemen, no delays
               </p>
             </div>
           </div>
-        </div>
+        </AnimateOnScroll>
       </section>
 
       {/* CTA Banner */}
       <section className="px-4 py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Ready to find your next collaborator?
+        <AnimateOnScroll className="mx-auto max-w-3xl text-center">
+          <h2 className="font-display text-4xl tracking-tight sm:text-5xl">
+            Seen something you like?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Browse portfolios, read reviews, and connect directly with creators who get it done.
+            Your next collaborator is already here. Start a conversation.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button
               size="lg"
-              className="h-12 px-8 bg-indigo-600 hover:bg-indigo-500 text-white text-base font-semibold shadow-lg shadow-indigo-900/40"
+              className="h-12 px-8 bg-brand hover:bg-brand/90 text-brand-foreground text-base font-semibold shadow-lg shadow-brand/40"
               asChild
             >
-              <Link href="/discover">Browse Creators</Link>
+              <Link href="/discover">Explore Talent</Link>
             </Button>
             <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" asChild>
-              <Link href="/login">Create Your Profile</Link>
+              <Link href="/login">Join the Community</Link>
             </Button>
           </div>
-        </div>
+        </AnimateOnScroll>
       </section>
 
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="mx-auto max-w-7xl flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <span className="text-sm font-semibold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="text-sm font-semibold bg-gradient-to-r from-brand to-brand/70 bg-clip-text text-transparent">
             Creatorwood
           </span>
           <p className="text-xs text-muted-foreground">

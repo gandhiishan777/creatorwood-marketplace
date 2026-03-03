@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { Bookmark } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { Button } from "@/components/ui/button";
 import { NavUserMenu } from "@/components/NavUserMenu";
+import { NavInboxBadge } from "@/components/NavInboxBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { getUnreadCount } from "@/app/actions/inbox";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -17,6 +20,8 @@ export async function Navbar() {
         .eq("id", user.id)
         .single()
     : { data: null };
+
+  const unreadCount = user ? await getUnreadCount() : 0;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -35,8 +40,12 @@ export async function Navbar() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/discover">Discover</Link>
             </Button>
+            <NavInboxBadge initialCount={unreadCount} userId={user.id} />
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/inbox">Inbox</Link>
+              <Link href="/saved" className="flex items-center gap-1.5">
+                <Bookmark className="size-3.5" />
+                Saved
+              </Link>
             </Button>
           </nav>
         )}

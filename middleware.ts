@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
-const PROTECTED_ROUTES = ["/settings", "/inbox"];
+const PROTECTED_ROUTES = ["/settings", "/inbox", "/saved"];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;
+
   const isProtected = PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
@@ -15,6 +16,22 @@ export async function proxy(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (
+    user &&
+    pathname !== "/settings" &&
+    !pathname.startsWith("/settings") &&
+    pathname !== "/login" &&
+    !pathname.startsWith("/login")
+  ) {
+    const profileComplete = request.cookies.get("cw_profile_complete");
+    if (!profileComplete) {
+      const onboardingUrl = request.nextUrl.clone();
+      onboardingUrl.pathname = "/settings";
+      onboardingUrl.searchParams.set("onboarding", "true");
+      return NextResponse.redirect(onboardingUrl);
+    }
   }
 
   return supabaseResponse;

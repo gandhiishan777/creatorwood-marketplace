@@ -1,17 +1,17 @@
 function SkeletonCard({ featured = false }: { featured?: boolean }) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className={`animate-pulse bg-muted ${featured ? "aspect-[4/3]" : "aspect-video"}`} />
+      <div className={`animate-shimmer ${featured ? "aspect-[4/3]" : "aspect-video"}`} />
       <div className="px-4 pb-4">
         <div className="-mt-6 mb-3">
-          <div className="size-12 animate-pulse rounded-full bg-muted ring-2 ring-background" />
+          <div className="size-12 animate-shimmer rounded-full ring-2 ring-background" />
         </div>
         <div className="flex flex-col gap-2">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-          <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-32 animate-shimmer rounded" />
+          <div className="h-3 w-20 animate-shimmer rounded" />
           <div className="flex gap-1.5">
-            <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-            <div className="h-5 w-14 animate-pulse rounded-full bg-muted" />
+            <div className="h-5 w-16 animate-shimmer rounded-full" />
+            <div className="h-5 w-14 animate-shimmer rounded-full" />
           </div>
         </div>
       </div>
@@ -25,20 +25,20 @@ export default function DiscoverLoading() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {/* Header skeleton */}
         <div className="mb-8">
-          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-          <div className="mt-3 h-4 w-72 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-48 animate-shimmer rounded" />
+          <div className="mt-3 h-4 w-72 animate-shimmer rounded" />
         </div>
 
         {/* Search skeleton */}
         <div className="mx-auto mb-8 max-w-2xl">
-          <div className="h-3 w-40 animate-pulse rounded bg-muted mb-2" />
-          <div className="h-14 w-full animate-pulse rounded-xl bg-muted" />
+          <div className="h-3 w-40 animate-shimmer rounded mb-2" />
+          <div className="h-14 w-full animate-shimmer rounded-xl" />
         </div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 items-start">
           {/* Sidebar skeleton */}
           <div className="col-span-1 hidden md:block">
-            <div className="h-64 animate-pulse rounded-xl border bg-card shadow-sm" />
+            <div className="h-64 animate-shimmer rounded-xl border bg-card shadow-sm" />
           </div>
 
           {/* Grid skeleton */}

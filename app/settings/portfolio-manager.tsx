@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   ArrowUp,
@@ -56,7 +57,7 @@ function ItemCard({
         toast.error(result.error)
       } else {
         onRemove(item.id)
-        toast.success("Removed.")
+        toast.success("Removed from your portfolio")
       }
     })
   }
@@ -133,6 +134,7 @@ function ItemCard({
 }
 
 export function PortfolioManager({ items: initialItems }: PortfolioManagerProps) {
+  const router = useRouter()
   const [items, setItems] = useState(initialItems)
   const [open, setOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -177,10 +179,9 @@ export function PortfolioManager({ items: initialItems }: PortfolioManagerProps)
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success("Image added!")
+        toast.success("Looking great — saved to your portfolio")
         setOpen(false)
-        // Reload items via page refresh to get the new item from DB
-        window.location.reload()
+        router.refresh()
       }
     } finally {
       setIsUploading(false)
@@ -198,11 +199,11 @@ export function PortfolioManager({ items: initialItems }: PortfolioManagerProps)
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success("Video added!")
+        toast.success("Video added to your portfolio")
         setVideoUrl("")
         setVideoTitle("")
         setOpen(false)
-        window.location.reload()
+        router.refresh()
       }
     })
   }
@@ -217,11 +218,11 @@ export function PortfolioManager({ items: initialItems }: PortfolioManagerProps)
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success("Link added!")
+        toast.success("Link saved — your portfolio has been updated")
         setLinkUrl("")
         setLinkTitle("")
         setOpen(false)
-        window.location.reload()
+        router.refresh()
       }
     })
   }

@@ -38,7 +38,7 @@ export function FeaturedCreators({ creators }: FeaturedCreatorsProps) {
                   <img
                     src={creator.portfolio_thumbnail}
                     alt={`${creator.display_name}'s work`}
-                    className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent to-muted">

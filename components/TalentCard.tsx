@@ -1,11 +1,14 @@
 "use client"
 
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { Star } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { ArrowRight, Star } from "lucide-react"
+import { MOTION } from "@/lib/motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { PresenceIndicator } from "@/components/PresenceIndicator"
+import { SaveButton } from "@/components/SaveButton"
 import { getInitials } from "@/lib/utils"
 
 export interface TalentCardProfile {
@@ -15,13 +18,115 @@ export interface TalentCardProfile {
   roles: string[] | null
   hourly_rate: number | null
   bio: string | null
-  portfolio_thumbnail: string | null
+  portfolio_thumbnails: string[]
   avg_rating: number | null
   review_count: number
+  isSaved?: boolean
 }
 
 interface TalentCardProps extends TalentCardProfile {
   featured?: boolean
+}
+
+function ThumbnailCycler({
+  thumbnails,
+  displayName,
+  featured,
+}: {
+  thumbnails: string[]
+  displayName: string
+  featured: boolean
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [isHovering, setIsHovering] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const startCycling = useCallback(() => {
+    if (thumbnails.length <= 1) return
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % thumbnails.length)
+    }, 1500)
+  }, [thumbnails.length])
+
+  const stopCycling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setActiveIndex(0)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
+
+  if (thumbnails.length === 0) {
+    return (
+      <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-accent/60">
+        <span className="text-3xl font-bold text-muted-foreground/30 select-none">
+          {getInitials(displayName)}
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="relative size-full"
+      onMouseEnter={() => {
+        setIsHovering(true)
+        startCycling()
+      }}
+      onMouseLeave={() => {
+        setIsHovering(false)
+        stopCycling()
+      }}
+    >
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={thumbnails[activeIndex]}
+          src={thumbnails[activeIndex]}
+          alt={`${displayName}'s work`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="size-full object-cover"
+        />
+      </AnimatePresence>
+
+      {/* Dot indicators */}
+      {thumbnails.length > 1 && (
+        <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+          {thumbnails.map((_, i) => (
+            <span
+              key={i}
+              className={`size-1.5 rounded-full transition-all duration-200 ${
+                i === activeIndex
+                  ? "bg-white scale-125"
+                  : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Frosted glass "View Profile" bar — slides up on hover */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t border-white/20 bg-white/10 px-4 py-2.5 backdrop-blur-md transition-transform duration-300 ${
+          isHovering ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <span className="text-xs font-semibold text-white">View Profile</span>
+        <ArrowRight className="size-3.5 text-white" />
+      </div>
+
+      {/* Bottom gradient for avatar overlap */}
+      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card/80 to-transparent" />
+    </div>
+  )
 }
 
 export function TalentCard({
@@ -30,41 +135,33 @@ export function TalentCard({
   avatar_url,
   roles,
   hourly_rate,
-  portfolio_thumbnail,
+  portfolio_thumbnails,
   avg_rating,
   review_count,
+  isSaved = false,
   featured = false,
 }: TalentCardProps) {
   return (
     <Link href={`/profile/${id}`} className="group block">
       <motion.div
-        whileHover={{ y: -4 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-shadow hover:shadow-xl hover:shadow-primary/5"
+        whileHover={{ y: -8 }}
+        transition={MOTION.spring}
+        className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-shadow duration-300 hover:shadow-[0_8px_30px_-5px_rgba(0,0,0,0.15),0_20px_50px_-10px_rgba(0,0,0,0.1)]"
       >
+        {/* Stacking card illusion */}
+        <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 -z-10 h-4 rounded-b-xl border border-border/30 bg-card/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
         {/* Portfolio Thumbnail */}
         <div className={`relative overflow-hidden bg-muted ${featured ? "aspect-[4/3]" : "aspect-video"}`}>
-          {portfolio_thumbnail ? (
-            <img
-              src={portfolio_thumbnail}
-              alt={`${display_name}'s work`}
-              className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-accent/60">
-              <span className="text-3xl font-bold text-muted-foreground/30 select-none">
-                {getInitials(display_name)}
-              </span>
-            </div>
-          )}
-          {/* Bottom gradient for avatar overlap */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card/80 to-transparent" />
+          <ThumbnailCycler
+            thumbnails={portfolio_thumbnails}
+            displayName={display_name}
+            featured={featured}
+          />
 
-          {/* Hover overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/10">
-            <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-semibold text-black opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 dark:bg-white/90 dark:text-black">
-              View Profile
-            </span>
+          {/* Save button — top right */}
+          <div className="absolute right-2.5 top-2.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0 max-sm:opacity-100">
+            <SaveButton creatorId={id} initialSaved={isSaved} size="sm" />
           </div>
         </div>
 
@@ -87,7 +184,7 @@ export function TalentCard({
           <div className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-semibold leading-tight">
+                <p className="truncate font-display text-lg leading-tight">
                   {display_name}
                 </p>
                 <p className="mt-0.5 text-sm text-muted-foreground">

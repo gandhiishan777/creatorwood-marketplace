@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ChatInterface, type MessageWithSender } from "@/components/ChatInterface"
 import { ReviewPrompt } from "@/components/ReviewPrompt"
-import { updateConnectionStatus } from "@/app/actions/inbox"
+import { updateConnectionStatus, markConnectionRead } from "@/app/actions/inbox"
 import { createClient } from "@/utils/supabase/server"
 import type { Tables } from "@/types/supabase"
 
@@ -94,6 +94,8 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
   if (connection.client_id !== user.id && connection.talent_id !== user.id) {
     redirect("/inbox")
   }
+
+  await markConnectionRead(id)
 
   const { data: messagesRaw } = await supabase
     .from("messages")

@@ -101,7 +101,7 @@ export function RatingSummary({
   if (totalCount === 0 || avgRating == null) {
     return (
       <div className="rounded-2xl border bg-card p-6">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <h2 className="mb-3 font-display text-xl tracking-tight">
           Reviews
         </h2>
         <p className="text-sm text-muted-foreground italic">No reviews yet</p>
@@ -111,7 +111,7 @@ export function RatingSummary({
 
   return (
     <div className="rounded-2xl border bg-card p-6">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <h2 className="mb-3 font-display text-xl tracking-tight">
         Reviews
       </h2>
       <div className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export function TestimonialsList({ reviews }: { reviews: Review[] }) {
 
   return (
     <div className="rounded-2xl border bg-card p-6">
-      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <h2 className="mb-4 font-display text-xl tracking-tight">
         What Clients Say
       </h2>
       <div className="flex flex-col gap-4">

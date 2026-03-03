@@ -1,11 +1,11 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { SlidersHorizontal } from "lucide-react"
 import { FilterSidebar } from "@/components/FilterSidebar"
 import { TalentGrid } from "@/components/TalentGrid"
 import { CastingSearch } from "@/components/CastingSearch"
 import { MobileFilterSheet } from "@/components/MobileFilterSheet"
 import { createClient } from "@/utils/supabase/server"
+import { getSavedCreatorIds } from "@/app/actions/saved"
 
 interface DiscoverPageProps {
   searchParams: Promise<{ roles?: string; maxRate?: string; q?: string }>
@@ -48,10 +48,10 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
   const { data: profiles } = await query
 
-  // Fetch first portfolio thumbnail for each profile
   const profileIds = profiles?.map((p) => p.id) ?? []
-  let thumbnailMap = new Map<string, string>()
 
+  // Fetch up to 4 portfolio thumbnails per profile
+  let thumbnailsMap = new Map<string, string[]>()
   if (profileIds.length > 0) {
     const { data: portfolioItems } = await supabase
       .from("portfolio_items")
@@ -61,8 +61,10 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
     if (portfolioItems) {
       for (const item of portfolioItems) {
-        if (!thumbnailMap.has(item.profile_id) && item.thumbnail_url) {
-          thumbnailMap.set(item.profile_id, item.thumbnail_url)
+        if (!item.thumbnail_url) continue
+        const existing = thumbnailsMap.get(item.profile_id) ?? []
+        if (existing.length < 4) {
+          thumbnailsMap.set(item.profile_id, [...existing, item.thumbnail_url])
         }
       }
     }
@@ -86,11 +88,14 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     }
   }
 
+  const savedIds = await getSavedCreatorIds()
+
   const enrichedProfiles = profiles?.map((p) => ({
     ...p,
-    portfolio_thumbnail: thumbnailMap.get(p.id) ?? null,
+    portfolio_thumbnails: thumbnailsMap.get(p.id) ?? [],
     avg_rating: ratingsMap.get(p.id)?.avg ?? null,
     review_count: ratingsMap.get(p.id)?.count ?? 0,
+    isSaved: savedIds.has(p.id),
   }))
 
   const hasFilters = Boolean(roles || maxRate || q)

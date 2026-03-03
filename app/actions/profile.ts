@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import type { TablesInsert } from "@/types/supabase";
 
@@ -29,9 +30,11 @@ export async function updateProfile(formData: FormData) {
 
   const avatarUrl = (formData.get("avatar_url") as string) || null;
 
+  const displayName = (formData.get("display_name") as string) ?? "";
+
   const payload: TablesInsert<"profiles"> = {
     id: user.id,
-    display_name: (formData.get("display_name") as string) ?? "",
+    display_name: displayName,
     bio: (formData.get("bio") as string) || null,
     hourly_rate: isNaN(hourly_rate as number) ? null : hourly_rate,
     roles: roles.length > 0 ? roles : null,
@@ -45,6 +48,16 @@ export async function updateProfile(formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (displayName && displayName !== "New User") {
+    const cookieStore = await cookies();
+    cookieStore.set("cw_profile_complete", "1", {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
   }
 
   revalidatePath("/settings");

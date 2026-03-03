@@ -31,10 +31,10 @@ export function FeaturedShowcase({ items }: FeaturedShowcaseProps) {
           <img
             src={hero.thumbnail_url}
             alt={hero.title ?? "Creator work"}
-            className="size-full aspect-square sm:aspect-auto object-cover transition-transform duration-500 group-hover:scale-105"
+            className="size-full aspect-square sm:aspect-auto object-cover animate-[ken-burns_20s_ease-in-out_infinite]"
           />
         ) : (
-          <div className="size-full aspect-square sm:aspect-auto bg-gradient-to-br from-indigo-500/20 to-violet-500/20" />
+          <div className="size-full aspect-square sm:aspect-auto bg-gradient-to-br from-brand/20 to-brand/10" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 transition-opacity" />
         <div className="absolute bottom-4 left-4 right-4">
@@ -58,10 +58,10 @@ export function FeaturedShowcase({ items }: FeaturedShowcaseProps) {
             <img
               src={item.thumbnail_url}
               alt={item.title ?? "Creator work"}
-              className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="size-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20" />
+            <div className="size-full bg-gradient-to-br from-brand/20 to-brand/10" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
           <p className="absolute bottom-2 left-2 right-2 truncate text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">

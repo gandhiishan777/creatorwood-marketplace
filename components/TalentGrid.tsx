@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 import { TalentCard, type TalentCardProfile } from "@/components/TalentCard"
+import { scaleIn } from "@/lib/motion"
 
 interface TalentGridProps {
   profiles: TalentCardProfile[]
@@ -21,10 +22,7 @@ export function TalentGrid({ profiles }: TalentGridProps) {
               <motion.div
                 key={profile.id}
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.25, type: "spring", stiffness: 300, damping: 25 }}
+                {...scaleIn}
               >
                 <TalentCard {...profile} featured />
               </motion.div>
@@ -41,10 +39,7 @@ export function TalentGrid({ profiles }: TalentGridProps) {
               <motion.div
                 key={profile.id}
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.25, type: "spring", stiffness: 300, damping: 25 }}
+                {...scaleIn}
               >
                 <TalentCard {...profile} />
               </motion.div>
