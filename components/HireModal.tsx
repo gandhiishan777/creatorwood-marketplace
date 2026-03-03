@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { useFormStatus } from "react-dom"
 import { usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -48,6 +48,7 @@ function SubmitButton() {
 export function HireModal({ talentId, talentName, glowing = false, isAuthenticated }: HireModalProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
   const [state, formAction] = useActionState(requestConnection, initialState)
 
   function handleTriggerClick(e: React.MouseEvent) {
@@ -59,6 +60,7 @@ export function HireModal({ talentId, talentName, glowing = false, isAuthenticat
 
   useEffect(() => {
     if (state.error === null && state !== initialState) {
+      setOpen(false)
       toast.success("Connection request sent!", {
         description: `Your request to ${talentName} has been sent. Head to your inbox to follow up.`,
       })
@@ -67,14 +69,14 @@ export function HireModal({ talentId, talentName, glowing = false, isAuthenticat
   }, [state, talentName, router])
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           size="lg"
           onClick={handleTriggerClick}
           className={
             glowing
-              ? "w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 border-0"
+              ? "w-full bg-gradient-to-r from-brand to-brand/80 text-brand-foreground hover:from-brand/90 hover:to-brand/70 border-0"
               : "w-full"
           }
         >

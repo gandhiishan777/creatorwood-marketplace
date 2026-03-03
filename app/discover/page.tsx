@@ -5,11 +5,15 @@ import { TalentGrid } from "@/components/TalentGrid"
 import { CastingSearch } from "@/components/CastingSearch"
 import { MobileFilterSheet } from "@/components/MobileFilterSheet"
 import { AIConcierge } from "@/components/AIConcierge"
+import { SortSelect } from "@/components/SortSelect"
+import { PageContainer } from "@/components/PageContainer"
+import { AnimateOnScroll } from "@/components/AnimateOnScroll"
 import { createClient } from "@/utils/supabase/server"
 import { getSavedCreatorIds } from "@/app/actions/saved"
+import { enrichProfilesWithMeta } from "@/lib/enrich-profiles"
 
 interface DiscoverPageProps {
-  searchParams: Promise<{ roles?: string; maxRate?: string; q?: string }>
+  searchParams: Promise<{ roles?: string; maxRate?: string; q?: string; sort?: string }>
 }
 
 function FilterSidebarFallback() {
@@ -19,17 +23,17 @@ function FilterSidebarFallback() {
 }
 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
-  const { roles, maxRate, q } = await searchParams
+  const { roles, maxRate, q, sort } = await searchParams
   const supabase = await createClient()
 
   let query = supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, bio, hourly_rate, roles")
+    .select("id, display_name, avatar_url, hourly_rate, roles")
     .eq("is_discoverable", true)
     .order("display_name", { ascending: true })
 
   if (roles) {
-    const roleList = roles.split(",").filter(Boolean)
+    const roleList = roles.split(",").filter(Boolean).map((r) => r.replace(/[^a-zA-Z0-9 _-]/g, ""))
     if (roleList.length === 1) {
       query = query.contains("roles", roleList)
     } else if (roleList.length > 1) {
@@ -38,10 +42,13 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     }
   }
   if (maxRate) {
-    query = query.lte("hourly_rate", Number(maxRate))
+    const parsedRate = Number(maxRate)
+    if (isFinite(parsedRate)) {
+      query = query.lte("hourly_rate", parsedRate)
+    }
   }
   if (q) {
-    const escaped = q.replace(/%/g, "")
+    const escaped = q.replace(/[%_]/g, "")
     query = query.or(
       `display_name.ilike.%${escaped}%,bio.ilike.%${escaped}%`
     )
@@ -49,64 +56,34 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
   const { data: profiles } = await query
 
-  const profileIds = profiles?.map((p) => p.id) ?? []
-
-  // Fetch up to 4 portfolio thumbnails per profile
-  let thumbnailsMap = new Map<string, string[]>()
-  if (profileIds.length > 0) {
-    const { data: portfolioItems } = await supabase
-      .from("portfolio_items")
-      .select("profile_id, thumbnail_url")
-      .in("profile_id", profileIds)
-      .order("sort_order", { ascending: true })
-
-    if (portfolioItems) {
-      for (const item of portfolioItems) {
-        if (!item.thumbnail_url) continue
-        const existing = thumbnailsMap.get(item.profile_id) ?? []
-        if (existing.length < 4) {
-          thumbnailsMap.set(item.profile_id, [...existing, item.thumbnail_url])
-        }
-      }
-    }
-  }
-
-  // Fetch ratings
-  let ratingsMap = new Map<string, { avg: number; count: number }>()
-  if (profileIds.length > 0) {
-    const { data: ratings } = await supabase
-      .from("profile_ratings")
-      .select("profile_id, avg_rating, review_count")
-      .in("profile_id", profileIds)
-
-    if (ratings) {
-      for (const r of ratings) {
-        ratingsMap.set(r.profile_id, {
-          avg: r.avg_rating,
-          count: r.review_count,
-        })
-      }
-    }
-  }
-
   const savedIds = await getSavedCreatorIds()
+  const enrichedProfiles = await enrichProfilesWithMeta(
+    supabase,
+    profiles ?? [],
+    savedIds,
+  )
 
-  const enrichedProfiles = profiles?.map((p) => ({
-    ...p,
-    portfolio_thumbnails: thumbnailsMap.get(p.id) ?? [],
-    avg_rating: ratingsMap.get(p.id)?.avg ?? null,
-    review_count: ratingsMap.get(p.id)?.count ?? 0,
-    isSaved: savedIds.has(p.id),
-  }))
+  const sorted = [...enrichedProfiles].sort((a, b) => {
+    switch (sort) {
+      case "price_asc":
+        return (a.hourly_rate ?? Infinity) - (b.hourly_rate ?? Infinity)
+      case "price_desc":
+        return (b.hourly_rate ?? 0) - (a.hourly_rate ?? 0)
+      case "rating":
+        return (b.avg_rating ?? 0) - (a.avg_rating ?? 0)
+      default:
+        return 0
+    }
+  })
 
-  const hasFilters = Boolean(roles || maxRate || q)
+  const hasFilters = Boolean(roles || maxRate || q || sort)
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between gap-4">
+      <PageContainer>
+        <AnimateOnScroll className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="font-display text-3xl tracking-tight">
               Discover Talent
             </h1>
             <p className="mt-2 text-muted-foreground">
@@ -119,7 +96,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
               <MobileFilterSheet />
             </Suspense>
           </div>
-        </div>
+        </AnimateOnScroll>
 
         <Suspense fallback={null}>
           <CastingSearch />
@@ -133,7 +110,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
           </div>
 
           <main className="col-span-1 md:col-span-3">
-            {!enrichedProfiles || enrichedProfiles.length === 0 ? (
+            {sorted.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-20 text-center shadow-sm">
                 <p className="text-lg font-medium">No talent found</p>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -151,13 +128,23 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 )}
               </div>
             ) : (
-              <TalentGrid profiles={enrichedProfiles} />
+              <>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {sorted.length} {sorted.length === 1 ? "creator" : "creators"} found
+                  </p>
+                  <Suspense fallback={null}>
+                    <SortSelect />
+                  </Suspense>
+                </div>
+                <TalentGrid profiles={sorted} />
+              </>
             )}
           </main>
         </div>
-      </div>
+      </PageContainer>
 
-      {enrichedProfiles && <AIConcierge profiles={enrichedProfiles} />}
+      {sorted.length > 0 && <AIConcierge profiles={sorted} />}
     </div>
   )
 }

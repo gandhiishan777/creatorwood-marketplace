@@ -17,7 +17,6 @@ export interface TalentCardProfile {
   avatar_url: string | null
   roles: string[] | null
   hourly_rate: number | null
-  bio: string | null
   portfolio_thumbnails: string[]
   avg_rating: number | null
   review_count: number
@@ -31,11 +30,9 @@ interface TalentCardProps extends TalentCardProfile {
 function ThumbnailCycler({
   thumbnails,
   displayName,
-  featured,
 }: {
   thumbnails: string[]
   displayName: string
-  featured: boolean
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
@@ -144,9 +141,9 @@ export function TalentCard({
   return (
     <Link href={`/profile/${id}`} className="group block">
       <motion.div
-        whileHover={{ y: -8 }}
+        whileHover={{ y: -4 }}
         transition={MOTION.spring}
-        className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-shadow duration-300 hover:shadow-[0_8px_30px_-5px_rgba(0,0,0,0.15),0_20px_50px_-10px_rgba(0,0,0,0.1)]"
+        className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-shadow duration-300 hover:shadow-lg"
       >
         {/* Stacking card illusion */}
         <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 -z-10 h-4 rounded-b-xl border border-border/30 bg-card/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -156,7 +153,6 @@ export function TalentCard({
           <ThumbnailCycler
             thumbnails={portfolio_thumbnails}
             displayName={display_name}
-            featured={featured}
           />
 
           {/* Save button — top right */}

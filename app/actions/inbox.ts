@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient, createAdminClient } from "@/utils/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import type { TablesInsert } from "@/types/supabase"
 
 export async function sendMessage(
@@ -58,11 +58,20 @@ export async function updateConnectionStatus(
 
   const { data: connection } = await supabase
     .from("connections")
-    .select("talent_id, client_id")
+    .select("talent_id, client_id, status")
     .eq("id", connectionId)
     .single()
 
   if (!connection) return { error: "Connection not found." }
+
+  const validTransitions: Record<string, string[]> = {
+    pending: ["active", "declined"],
+    active: ["completed"],
+  }
+  const allowed = validTransitions[connection.status as string] ?? []
+  if (!allowed.includes(status)) {
+    return { error: "Invalid status transition." }
+  }
 
   if (
     (status === "active" || status === "declined") &&
@@ -112,9 +121,7 @@ export async function cancelConnection(
   if (connection.client_id !== user.id) return { error: "Only the sender can cancel a request." }
   if (connection.status !== "pending") return { error: "Only pending requests can be cancelled." }
 
-  // Use admin client to bypass RLS (auth + ownership already verified above)
-  const admin = createAdminClient()
-  const { error } = await admin
+  const { error } = await supabase
     .from("connections")
     .delete()
     .eq("id", connectionId)
@@ -176,25 +183,24 @@ export async function getUnreadCount(): Promise<number> {
 
   if (!connections || connections.length === 0) return 0
 
-  let total = 0
+  const counts = await Promise.all(
+    connections.map((conn) => {
+      const isClient = conn.client_id === user.id
+      const lastRead = isClient ? conn.client_last_read_at : conn.talent_last_read_at
 
-  for (const conn of connections) {
-    const isClient = conn.client_id === user.id
-    const lastRead = isClient ? conn.client_last_read_at : conn.talent_last_read_at
+      let msgQuery = supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("connection_id", conn.id)
+        .neq("sender_id", user.id)
 
-    let msgQuery = supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("connection_id", conn.id)
-      .neq("sender_id", user.id)
+      if (lastRead) {
+        msgQuery = msgQuery.gt("created_at", lastRead)
+      }
 
-    if (lastRead) {
-      msgQuery = msgQuery.gt("created_at", lastRead)
-    }
+      return msgQuery.then(({ count }) => count ?? 0)
+    })
+  )
 
-    const { count } = await msgQuery
-    total += count ?? 0
-  }
-
-  return total
+  return counts.reduce((sum, c) => sum + c, 0)
 }

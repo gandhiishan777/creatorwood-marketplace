@@ -143,11 +143,18 @@ export async function addPortfolioItem(
     const linkUrl = formData.get("url") as string
     if (!linkUrl?.trim()) return { error: "URL is required.", id: null }
 
+    let linkHostname: string
+    try {
+      linkHostname = new URL(linkUrl.trim()).hostname
+    } catch {
+      return { error: "Invalid URL. Please enter a valid web address.", id: null }
+    }
+
     const payload: TablesInsert<"portfolio_items"> = {
       profile_id: user.id,
       type: "link",
       url: linkUrl.trim(),
-      title: title || new URL(linkUrl.trim()).hostname,
+      title: title || linkHostname,
       sort_order: sortOrder,
     }
 

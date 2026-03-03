@@ -14,7 +14,7 @@ export function ThemeToggle() {
   }, []);
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon" className="w-9 h-9 opacity-0" />;
+    return <Button variant="ghost" size="icon" className="w-9 h-9 invisible" aria-hidden />;
   }
 
   return (

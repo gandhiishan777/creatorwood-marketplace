@@ -29,7 +29,7 @@ export async function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent"
+          className="text-lg font-bold tracking-tight bg-gradient-to-r from-brand to-brand/70 bg-clip-text text-transparent"
         >
           Creatorwood
         </Link>
@@ -61,7 +61,7 @@ export async function Navbar() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white" asChild>
+              <Button size="sm" className="bg-brand hover:bg-brand/90 text-brand-foreground" asChild>
                 <Link href="/login">Sign Up</Link>
               </Button>
             </>

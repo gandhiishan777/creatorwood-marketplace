@@ -27,7 +27,7 @@ export default async function LandingPage() {
     .order("created_at", { ascending: false })
     .limit(8)
 
-  let creatorThumbnails = new Map<string, string>()
+  const creatorThumbnails = new Map<string, string>()
   if (creatorsRaw && creatorsRaw.length > 0) {
     const { data: portfolioItems } = await supabase
       .from("portfolio_items")
@@ -64,13 +64,12 @@ export default async function LandingPage() {
       .eq("status", "completed"),
   ])
 
-  type ShowcaseItem = {
+  const typedShowcase = (showcaseItems ?? []) as Array<{
     thumbnail_url: string | null
     title: string | null
     profile_id: string
     profiles: { display_name: string; avatar_url: string | null }
-  }
-  const typedShowcase = (showcaseItems ?? []) as unknown as ShowcaseItem[]
+  }>
   const hasShowcase = typedShowcase.length > 0
   const hasCreators = featuredCreators.length > 0
 
@@ -207,9 +206,9 @@ export default async function LandingPage() {
             </div>
             <div className="col-span-2 flex flex-col items-center text-center sm:col-span-1">
               <Star className="mb-2 size-5 text-brand" />
-              <p className="text-3xl font-bold">Direct</p>
+              <p className="text-3xl font-bold">100%</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                No middlemen, no delays
+                Direct — no middlemen
               </p>
             </div>
           </div>
@@ -241,14 +240,59 @@ export default async function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="mx-auto max-w-7xl flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <span className="text-sm font-semibold bg-gradient-to-r from-brand to-brand/70 bg-clip-text text-transparent">
-            Creatorwood
-          </span>
-          <p className="text-xs text-muted-foreground">
-            &copy; 2026 Creatorwood. All rights reserved.
-          </p>
+      <footer className="border-t px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+            {/* Brand */}
+            <div className="col-span-2 sm:col-span-1">
+              <span className="text-sm font-semibold bg-gradient-to-r from-brand to-brand/70 bg-clip-text text-transparent">
+                Creatorwood
+              </span>
+              <p className="mt-2 max-w-xs text-xs leading-relaxed text-muted-foreground">
+                The marketplace for hiring AI creators. Connect directly with top talent.
+              </p>
+            </div>
+
+            {/* Product */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Product
+              </p>
+              <ul className="mt-3 flex flex-col gap-2">
+                <li>
+                  <Link href="/discover" className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                    Discover
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                    Sign Up
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Company
+              </p>
+              <ul className="mt-3 flex flex-col gap-2">
+                <li>
+                  <span className="text-sm text-foreground/70">Terms</span>
+                </li>
+                <li>
+                  <span className="text-sm text-foreground/70">Privacy</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 border-t pt-6">
+            <p className="text-xs text-muted-foreground">
+              &copy; 2026 Creatorwood. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

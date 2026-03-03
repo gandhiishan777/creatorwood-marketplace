@@ -37,59 +37,57 @@ function Lightbox({
   }, [onClose])
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        role="dialog"
-        aria-modal="true"
-        aria-label={item.title ?? "Portfolio piece lightbox"}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.title ?? "Portfolio piece lightbox"}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <button
+        ref={closeRef}
         onClick={onClose}
+        aria-label="Close lightbox"
+        className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
       >
-        <button
-          ref={closeRef}
-          onClick={onClose}
-          aria-label="Close lightbox"
-          className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-        >
-          <X className="size-5" />
-        </button>
+        <X className="size-5" />
+      </button>
 
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={MOTION.spring}
-          className="w-full max-w-4xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {item.type === "video_embed" ? (
-            <div className="aspect-video w-full overflow-hidden rounded-xl">
-              <iframe
-                src={item.url}
-                title={item.title ?? "Video"}
-                className="size-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <img
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={MOTION.spring}
+        className="w-full max-w-4xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {item.type === "video_embed" ? (
+          <div className="aspect-video w-full overflow-hidden rounded-xl">
+            <iframe
               src={item.url}
-              alt={item.title ?? "Portfolio piece"}
-              className="max-h-[85vh] w-full rounded-xl object-contain"
+              title={item.title ?? "Video"}
+              className="size-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
-          )}
-          {item.title && (
-            <p className="mt-3 text-center text-sm font-medium text-white/80">
-              {item.title}
-            </p>
-          )}
-        </motion.div>
+          </div>
+        ) : (
+          <img
+            src={item.url}
+            alt={item.title ?? "Portfolio piece"}
+            className="max-h-[85vh] w-full rounded-xl object-contain"
+          />
+        )}
+        {item.title && (
+          <p className="mt-3 text-center text-sm font-medium text-white/80">
+            {item.title}
+          </p>
+        )}
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   )
 }
 
@@ -211,9 +209,11 @@ export function PortfolioGallery({ items, creatorName }: PortfolioGalleryProps) 
         )}
       </div>
 
-      {lightboxItem && (
-        <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
-      )}
+      <AnimatePresence>
+        {lightboxItem && (
+          <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
+        )}
+      </AnimatePresence>
     </>
   )
 }

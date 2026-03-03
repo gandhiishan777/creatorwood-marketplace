@@ -7,6 +7,7 @@ import { PortfolioGallery } from "@/components/PortfolioGallery"
 import { RatingSummary, TestimonialsList } from "@/components/ReviewsDisplay"
 import { SaveButton } from "@/components/SaveButton"
 import { AnimateOnScroll } from "@/components/AnimateOnScroll"
+import { PageContainer } from "@/components/PageContainer"
 import { getSavedCreatorIds } from "@/app/actions/saved"
 import { getInitials } from "@/lib/utils"
 
@@ -58,7 +59,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     rating: number
     comment: string | null
     created_at: string | null
-    reviewer: { display_name: string; avatar_url: string | null }
+    reviewer: { display_name: string; avatar_url: string | null } | null
   }>
   const totalReviews = reviewList.length
   const avgRating =
@@ -152,7 +153,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       </section>
 
       {/* Content area */}
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <PageContainer maxWidth="lg">
         {/* Pull-quote tagline */}
         {tagline && (
           <AnimateOnScroll className="mb-10">
@@ -243,7 +244,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </AnimateOnScroll>
           )}
         </div>
-      </div>
+      </PageContainer>
     </div>
   )
 }

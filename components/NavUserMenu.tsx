@@ -29,10 +29,10 @@ export function NavUserMenu({ email, displayName, avatarUrl }: NavUserMenuProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full">
+        <Button variant="ghost" size="icon" aria-label="User menu" className="w-9 h-9 rounded-full">
           <Avatar className="w-8 h-8">
             <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? email ?? ""} />
-            <AvatarFallback className="bg-indigo-600 text-white text-xs font-semibold">
+            <AvatarFallback className="bg-brand text-brand-foreground text-xs font-semibold">
               {initials ?? <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>

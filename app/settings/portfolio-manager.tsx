@@ -12,7 +12,6 @@ import {
   Play,
   Trash2,
   Video,
-  X,
   ExternalLink,
 } from "lucide-react"
 import { addPortfolioItem, removePortfolioItem, reorderPortfolioItems } from "@/app/actions/portfolio"

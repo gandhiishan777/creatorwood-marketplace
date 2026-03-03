@@ -63,7 +63,8 @@ export function CastingSearch() {
           onFocus={() => { isFocusedRef.current = true }}
           onBlur={() => { isFocusedRef.current = false }}
           placeholder="Search by name..."
-          className="h-12 w-full rounded-xl border bg-card pl-12 pr-4 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none"
+          aria-label="Search creators"
+          className="h-12 w-full rounded-xl border bg-card pl-12 pr-4 text-sm text-foreground shadow-sm transition-[color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
         />
 
         {isPending && (

@@ -24,6 +24,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
     let channel: ReturnType<typeof supabase.channel> | null = null
+    let aborted = false
 
     async function setup() {
       const {
@@ -31,7 +32,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getUser()
 
       // Anonymous visitors: don't subscribe, leave state as empty/inactive
-      if (!user) return
+      if (!user || aborted) return
 
       channel = supabase.channel("online-users", {
         config: { presence: { key: user.id } },
@@ -44,7 +45,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
           setOnlineUsers(new Set(Object.keys(state)))
         })
         .subscribe(async (status) => {
-          if (status === "SUBSCRIBED" && channel) {
+          if (status === "SUBSCRIBED" && channel && !aborted) {
             await channel.track({ online_at: new Date().toISOString() })
             setIsActive(true)
           }
@@ -54,6 +55,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     setup()
 
     return () => {
+      aborted = true
       if (channel) {
         channel.untrack().then(() => {
           supabase.removeChannel(channel!)

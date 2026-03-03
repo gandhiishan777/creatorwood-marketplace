@@ -2,9 +2,20 @@ import { streamText, tool, stepCountIs, convertToModelMessages } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
 import { buildCreatorContext } from "@/lib/ai-context"
+import { createClient } from "@/utils/supabase/server"
 
 export async function POST(req: Request) {
-  const { messages: uiMessages } = await req.json()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const body = await req.json()
+  const uiMessages = body?.messages
+  if (!Array.isArray(uiMessages)) {
+    return new Response("Invalid request body", { status: 400 })
+  }
   const messages = await convertToModelMessages(uiMessages)
 
   const creatorContext = await buildCreatorContext()

@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation"
 import { Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ChatInterface, type MessageWithSender } from "@/components/ChatInterface"
 import { ReviewPrompt } from "@/components/ReviewPrompt"
+import { FormSubmitButton } from "@/components/FormSubmitButton"
 import { updateConnectionStatus, cancelConnection } from "@/app/actions/inbox"
 import { MarkReadOnMount } from "@/components/MarkReadOnMount"
+import { PageContainer } from "@/components/PageContainer"
 import { createClient } from "@/utils/supabase/server"
 import type { Tables } from "@/types/supabase"
 
@@ -122,31 +123,35 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
 
   async function acceptAction() {
     "use server"
-    await updateConnectionStatus(id, "active")
+    const result = await updateConnectionStatus(id, "active")
+    if (result.error) throw new Error(result.error)
   }
   async function declineAction() {
     "use server"
-    await updateConnectionStatus(id, "declined")
+    const result = await updateConnectionStatus(id, "declined")
+    if (result.error) throw new Error(result.error)
   }
   async function completeAction() {
     "use server"
-    await updateConnectionStatus(id, "completed")
+    const result = await updateConnectionStatus(id, "completed")
+    if (result.error) throw new Error(result.error)
   }
   async function cancelAction() {
     "use server"
     const result = await cancelConnection(id)
-    if (!result.error) redirect("/inbox")
+    if (result.error) throw new Error(result.error)
+    redirect("/inbox")
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <MarkReadOnMount connectionId={id} />
-      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
+      <PageContainer maxWidth="md" className="w-full flex-1">
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-bold tracking-tight">
+              <h1 className="truncate font-display text-2xl tracking-tight">
                 {connection.project_title}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -164,14 +169,14 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
           {connection.status === "pending" && isTalent && (
             <div className="flex gap-2">
               <form action={acceptAction}>
-                <Button type="submit" size="sm">
+                <FormSubmitButton size="sm">
                   Accept Pitch
-                </Button>
+                </FormSubmitButton>
               </form>
               <form action={declineAction}>
-                <Button type="submit" variant="outline" size="sm">
+                <FormSubmitButton variant="outline" size="sm">
                   Decline
-                </Button>
+                </FormSubmitButton>
               </form>
             </div>
           )}
@@ -180,9 +185,9 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
           {connection.status === "pending" && isClient && (
             <div className="flex gap-2">
               <form action={cancelAction}>
-                <Button type="submit" variant="destructive" size="sm">
+                <FormSubmitButton variant="destructive" size="sm">
                   Cancel Request
-                </Button>
+                </FormSubmitButton>
               </form>
             </div>
           )}
@@ -191,9 +196,9 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
           {connection.status === "active" && (isClient || isTalent) && (
             <div className="flex gap-2">
               <form action={completeAction}>
-                <Button type="submit" variant="secondary" size="sm">
+                <FormSubmitButton variant="secondary" size="sm">
                   Mark as Completed
-                </Button>
+                </FormSubmitButton>
               </form>
             </div>
           )}
@@ -217,7 +222,7 @@ export default async function InboxRoomPage({ params }: RoomPageProps) {
           currentUser={currentUserProfile}
           otherUser={otherUserProfile}
         />
-      </div>
+      </PageContainer>
     </div>
   )
 }

@@ -20,9 +20,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     user &&
-    pathname !== "/settings" &&
     !pathname.startsWith("/settings") &&
-    pathname !== "/login" &&
     !pathname.startsWith("/login")
   ) {
     const profileComplete = request.cookies.get("cw_profile_complete");

@@ -70,6 +70,7 @@ export async function requestConnection(
     .insert(messagePayload)
 
   if (msgError) {
+    await supabase.from("connections").delete().eq("id", connection.id)
     return { error: msgError.message }
   }
 

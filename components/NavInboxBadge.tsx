@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { createClient } from "@/utils/supabase/client"
+import { getUnreadCount } from "@/app/actions/inbox"
 import { Button } from "@/components/ui/button"
 
 interface NavInboxBadgeProps {
@@ -33,7 +34,7 @@ export function NavInboxBadge({ initialCount, userId }: NavInboxBadgeProps) {
         (payload) => {
           const msg = payload.new as { sender_id: string }
           if (msg.sender_id !== userId) {
-            setCount((prev) => prev + 1)
+            getUnreadCount().then(setCount)
           }
         }
       )

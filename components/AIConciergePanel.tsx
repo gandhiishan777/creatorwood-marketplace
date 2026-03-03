@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
@@ -85,7 +85,7 @@ function AIConciergeCard({ profile }: AIConciergeCardProps) {
   )
 }
 
-interface AIConcierePanelProps {
+interface AIConciergePanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   profiles: TalentCardProfile[]
@@ -104,20 +104,22 @@ const welcomeMessage: UIMessage = {
   ],
 }
 
+const chatTransport = new DefaultChatTransport({ api: "/api/ai-chat" })
+
 export function AIConciergePanel({
   open,
   onOpenChange,
   profiles,
-}: AIConcierePanelProps) {
+}: AIConciergePanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState("")
 
   const { messages, sendMessage, setMessages, status } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/ai-chat" }),
+    transport: chatTransport,
     messages: [welcomeMessage],
     onToolCall: async ({ toolCall }) => {
       if (toolCall.toolName === "showCreatorCards") {
-        return "Cards displayed to user."
+        // no-op: cards are rendered inline from tool invocation parts
       }
     },
   })
@@ -135,7 +137,10 @@ export function AIConciergePanel({
     }
   }, [open, setMessages])
 
-  const profilesById = new Map(profiles.map((p) => [p.id, p]))
+  const profilesById = useMemo(
+    () => new Map(profiles.map((p) => [p.id, p])),
+    [profiles]
+  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -193,9 +198,6 @@ export function AIConciergePanel({
               )
               const textContent = textParts.map((p) => p.text).join("")
 
-              if (!isUser && message.parts.length > 0) {
-                console.log("[AI Parts]", JSON.stringify(message.parts.map(p => ({ type: p.type, ...("toolName" in p ? { toolName: (p as Record<string, unknown>).toolName } : {}) }))))
-              }
 
               const toolParts: Array<{ profileIds: string[] }> = []
               for (const p of message.parts) {

@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
-
-const ROLES = ["Director", "Writer", "Producer", "Editor"] as const
+import { CREATOR_ROLES } from "@/lib/constants"
 
 export function FilterSidebar() {
   const router = useRouter()
@@ -20,6 +19,10 @@ export function FilterSidebar() {
   const [displayRate, setDisplayRate] = useState(
     currentMaxRate ? Number(currentMaxRate) : 500
   )
+
+  useEffect(() => {
+    setDisplayRate(currentMaxRate ? Number(currentMaxRate) : 500)
+  }, [currentMaxRate])
 
   function handleRoleChange(role: string, checked: boolean) {
     const next = checked
@@ -58,7 +61,7 @@ export function FilterSidebar() {
         <div className="flex flex-col gap-4">
           <p className="text-sm font-medium">Role</p>
           <div className="flex flex-col gap-2.5">
-            {ROLES.map((role) => (
+            {CREATOR_ROLES.map((role) => (
               <div key={role} className="flex items-center gap-2.5">
                 <Checkbox
                   id={`role-${role}`}

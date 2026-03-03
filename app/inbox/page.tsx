@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
 import { InboxTabs, type ConnectionWithProfiles } from "@/components/InboxTabs"
+import { PageContainer } from "@/components/PageContainer"
+import { AnimateOnScroll } from "@/components/AnimateOnScroll"
 import { createClient } from "@/utils/supabase/server"
 
 export default async function InboxPage() {
@@ -26,18 +28,18 @@ export default async function InboxPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Inbox</h1>
+      <PageContainer maxWidth="md">
+        <AnimateOnScroll className="mb-8">
+          <h1 className="font-display text-3xl tracking-tight">Inbox</h1>
           <p className="mt-2 text-muted-foreground">
             Manage your project connections and conversations.
           </p>
-        </div>
+        </AnimateOnScroll>
         <InboxTabs
           connections={(connections ?? []) as ConnectionWithProfiles[]}
           currentUserId={user.id}
         />
-      </div>
+      </PageContainer>
     </div>
   )
 }

@@ -137,10 +137,10 @@
 
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px 0 oklch(0.627 0.265 303.9 / 0.3);
+    box-shadow: 0 0 20px 0 color-mix(in oklch, var(--brand) 30%, transparent);
   }
   50% {
-    box-shadow: 0 0 30px 5px oklch(0.627 0.265 303.9 / 0.5);
+    box-shadow: 0 0 30px 5px color-mix(in oklch, var(--brand) 50%, transparent);
   }
 }
 

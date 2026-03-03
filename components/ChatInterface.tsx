@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { getInitials } from "@/lib/utils"
 import type { Tables } from "@/types/supabase"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 export type MessageWithSender = Tables<"messages"> & {
   sender: Pick<Tables<"profiles">, "display_name" | "avatar_url">
@@ -33,9 +34,14 @@ function formatTime(timestamp: string | null) {
   })
 }
 
+let sharedAudioCtx: AudioContext | null = null
+
 function playNotificationSound() {
   try {
-    const ctx = new AudioContext()
+    if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+      sharedAudioCtx = new AudioContext()
+    }
+    const ctx = sharedAudioCtx
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.connect(gain)
@@ -68,7 +74,7 @@ export function ChatInterface({
   // Refs for typing indicator
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastTypingBroadcast = useRef(0)
-  const channelRef = useRef<ReturnType<typeof createClient>["channel"] | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -115,7 +121,7 @@ export function ChatInterface({
       })
       .subscribe()
 
-    channelRef.current = channel as unknown as ReturnType<typeof createClient>["channel"]
+    channelRef.current = channel
 
     return () => {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
@@ -124,11 +130,11 @@ export function ChatInterface({
   }, [connectionId, currentUserId, currentUser, otherUser])
 
   function broadcastTyping() {
+    if (!channelRef.current) return
     const now = Date.now()
     if (now - lastTypingBroadcast.current < 2000) return
     lastTypingBroadcast.current = now
-    const supabase = createClient()
-    supabase.channel(`room-${connectionId}`).send({
+    channelRef.current.send({
       type: "broadcast",
       event: "typing",
       payload: { userId: currentUserId },

@@ -14,13 +14,7 @@ interface Review {
   reviewer: {
     display_name: string
     avatar_url: string | null
-  }
-}
-
-interface ReviewsDisplayProps {
-  reviews: Review[]
-  avgRating: number | null
-  totalCount: number
+  } | null
 }
 
 function StarRow({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
@@ -62,20 +56,22 @@ function timeAgo(dateStr: string | null): string {
 }
 
 function ReviewCard({ review }: { review: Review }) {
+  const reviewer = review.reviewer ?? { display_name: "Anonymous", avatar_url: null }
+
   return (
     <div className="flex gap-3 border-l-2 border-amber-400/30 pl-4 py-2">
       <Avatar className="size-8 shrink-0">
         <AvatarImage
-          src={review.reviewer.avatar_url ?? undefined}
-          alt={review.reviewer.display_name}
+          src={reviewer.avatar_url ?? undefined}
+          alt={reviewer.display_name}
         />
         <AvatarFallback className="text-xs">
-          {getInitials(review.reviewer.display_name)}
+          {getInitials(reviewer.display_name)}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">{review.reviewer.display_name}</p>
+          <p className="text-sm font-medium">{reviewer.display_name}</p>
           <span className="text-xs text-muted-foreground">
             {timeAgo(review.created_at)}
           </span>

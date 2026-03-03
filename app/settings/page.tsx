@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { Separator } from "@/components/ui/separator";
+import { PageContainer } from "@/components/PageContainer";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { ProfileForm } from "./profile-form";
 import { PortfolioManager } from "./portfolio-manager";
 
@@ -33,7 +35,7 @@ export default async function SettingsPage({
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-xl px-4 py-16">
+      <PageContainer maxWidth="sm" className="py-16">
         {onboarding && (
           <div className="mb-8 flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-muted p-4">
             <Sparkles className="size-5 shrink-0 text-brand" />
@@ -47,14 +49,14 @@ export default async function SettingsPage({
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight">
+        <AnimateOnScroll className="mb-8">
+          <h1 className="font-display text-3xl tracking-tight">
             {onboarding ? "Create Your Profile" : "Setup Your Profile"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Tell the community who you are and what you do.
           </p>
-        </div>
+        </AnimateOnScroll>
         <ProfileForm profile={profile} userId={user.id} />
 
         <Separator className="my-10" />
@@ -71,7 +73,7 @@ export default async function SettingsPage({
             </p>
           </div>
         )}
-      </div>
+      </PageContainer>
     </main>
   );
 }

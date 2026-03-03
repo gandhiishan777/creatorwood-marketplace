@@ -15,7 +15,7 @@ export function PresenceIndicator({ userId, size = "sm" }: PresenceIndicatorProp
 
   if (isOnline) {
     return (
-      <span className={`relative flex ${sizeClass}`}>
+      <span role="status" aria-label="Online" className={`relative flex ${sizeClass}`}>
         <span
           className={`absolute inline-flex ${sizeClass} animate-ping rounded-full bg-emerald-400 opacity-75`}
         />
@@ -28,6 +28,8 @@ export function PresenceIndicator({ userId, size = "sm" }: PresenceIndicatorProp
 
   return (
     <span
+      role="status"
+      aria-label="Offline"
       className={`inline-flex ${sizeClass} rounded-full bg-zinc-500`}
     />
   )
