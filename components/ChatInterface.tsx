@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useTransition } from "react"
+import { motion } from "framer-motion"
 import { SendHorizonalIcon } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { sendMessage } from "@/app/actions/inbox"
@@ -38,6 +39,22 @@ function formatTime(timestamp: string | null) {
   })
 }
 
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 800
+    gain.gain.value = 0.08
+    osc.start()
+    osc.stop(ctx.currentTime + 0.08)
+  } catch {
+    // AudioContext unavailable or user hasn't interacted yet
+  }
+}
+
 export function ChatInterface({
   initialMessages,
   connectionId,
@@ -48,14 +65,23 @@ export function ChatInterface({
   const [messages, setMessages] = useState<MessageWithSender[]>(initialMessages)
   const [input, setInput] = useState("")
   const [isPending, startTransition] = useTransition()
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Track initial message count so we only animate truly new messages
+  const initialCountRef = useRef(initialMessages.length)
+
+  // Refs for typing indicator
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTypingBroadcast = useRef(0)
+  const channelRef = useRef<ReturnType<typeof createClient>["channel"] | null>(null)
 
   // Auto-scroll when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  }, [messages, isOtherTyping])
 
-  // Supabase Realtime subscription
+  // Supabase Realtime: postgres_changes + typing broadcast
   useEffect(() => {
     const supabase = createClient()
 
@@ -73,19 +99,47 @@ export function ChatInterface({
           const newMsg = payload.new as Tables<"messages">
           const sender =
             newMsg.sender_id === currentUserId ? currentUser : otherUser
+
+          if (newMsg.sender_id !== currentUserId) {
+            playNotificationSound()
+          }
+
           setMessages((prev) => {
-            // Deduplicate: skip if a message with this ID already exists
             if (prev.some((m) => m.id === newMsg.id)) return prev
             return [...prev, { ...newMsg, sender }]
           })
         }
       )
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (payload.userId !== currentUserId) {
+          setIsOtherTyping(true)
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = setTimeout(() => {
+            setIsOtherTyping(false)
+          }, 3000)
+        }
+      })
       .subscribe()
 
+    channelRef.current = channel as unknown as ReturnType<typeof createClient>["channel"]
+
     return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
       supabase.removeChannel(channel)
     }
   }, [connectionId, currentUserId, currentUser, otherUser])
+
+  function broadcastTyping() {
+    const now = Date.now()
+    if (now - lastTypingBroadcast.current < 2000) return
+    lastTypingBroadcast.current = now
+    const supabase = createClient()
+    supabase.channel(`room-${connectionId}`).send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: currentUserId },
+    })
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -95,7 +149,6 @@ export function ChatInterface({
     setInput("")
     startTransition(async () => {
       await sendMessage(connectionId, content)
-      // Realtime subscription will deliver the new message
     })
   }
 
@@ -104,6 +157,11 @@ export function ChatInterface({
       e.preventDefault()
       handleSubmit(e as unknown as React.FormEvent)
     }
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setInput(e.target.value)
+    broadcastTyping()
   }
 
   return (
@@ -118,11 +176,16 @@ export function ChatInterface({
           </div>
         ) : (
           <div className="flex flex-col gap-4 pb-2">
-            {messages.map((message) => {
+            {messages.map((message, index) => {
               const isMine = message.sender_id === currentUserId
+              const isNew = index >= initialCountRef.current
+
               return (
-                <div
+                <motion.div
                   key={message.id}
+                  initial={isNew ? { opacity: 0, y: 16 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                   className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : "flex-row"}`}
                 >
                   <Avatar className="size-7 shrink-0">
@@ -152,7 +215,7 @@ export function ChatInterface({
                       {formatTime(message.created_at)}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
             <div ref={bottomRef} />
@@ -160,11 +223,34 @@ export function ChatInterface({
         )}
       </ScrollArea>
 
+      {/* Typing indicator */}
+      <div
+        className={`flex items-center gap-2 px-2 text-sm text-muted-foreground transition-all duration-200 ${
+          isOtherTyping ? "opacity-100 h-5" : "opacity-0 h-0 overflow-hidden"
+        }`}
+      >
+        <span className="flex gap-1">
+          <span
+            className="size-1.5 rounded-full bg-muted-foreground animate-bounce"
+            style={{ animationDelay: "0ms" }}
+          />
+          <span
+            className="size-1.5 rounded-full bg-muted-foreground animate-bounce"
+            style={{ animationDelay: "150ms" }}
+          />
+          <span
+            className="size-1.5 rounded-full bg-muted-foreground animate-bounce"
+            style={{ animationDelay: "300ms" }}
+          />
+        </span>
+        <span>{otherUser.display_name} is typing...</span>
+      </div>
+
       {/* Input form */}
       <form onSubmit={handleSubmit} className="flex items-end gap-2">
         <Textarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Write a message… (Enter to send, Shift+Enter for new line)"
           rows={2}

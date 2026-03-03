@@ -1,11 +1,12 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { FilterSidebar } from "@/components/FilterSidebar"
-import { TalentCard } from "@/components/TalentCard"
+import { TalentGrid } from "@/components/TalentGrid"
+import { CastingSearch } from "@/components/CastingSearch"
 import { createClient } from "@/utils/supabase/server"
 
 interface DiscoverPageProps {
-  searchParams: Promise<{ role?: string; maxRate?: string }>
+  searchParams: Promise<{ roles?: string; maxRate?: string; q?: string }>
 }
 
 function FilterSidebarFallback() {
@@ -15,7 +16,7 @@ function FilterSidebarFallback() {
 }
 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
-  const { role, maxRate } = await searchParams
+  const { roles, maxRate, q } = await searchParams
   const supabase = await createClient()
 
   let query = supabase
@@ -24,16 +25,30 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     .eq("is_discoverable", true)
     .order("display_name", { ascending: true })
 
-  if (role) {
-    query = query.contains("roles", [role])
+  if (roles) {
+    const roleList = roles.split(",").filter(Boolean)
+    if (roleList.length === 1) {
+      query = query.contains("roles", roleList)
+    } else if (roleList.length > 1) {
+      // Match profiles whose roles array contains ANY of the selected roles
+      const orFilter = roleList.map((r) => `roles.cs.{"${r}"}`).join(",")
+      query = query.or(orFilter)
+    }
   }
   if (maxRate) {
     query = query.lte("hourly_rate", Number(maxRate))
   }
+  if (q) {
+    // Strip % characters to prevent filter injection, then apply ilike search
+    const escaped = q.replace(/%/g, "")
+    query = query.or(
+      `display_name.ilike.%${escaped}%,bio.ilike.%${escaped}%`
+    )
+  }
 
   const { data: profiles } = await query
 
-  const hasFilters = Boolean(role || maxRate)
+  const hasFilters = Boolean(roles || maxRate || q)
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,6 +61,11 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
             Find the right creative professional for your next project.
           </p>
         </div>
+
+        {/* Casting Search — full width above the grid */}
+        <Suspense fallback={null}>
+          <CastingSearch />
+        </Suspense>
 
         <div className="grid grid-cols-4 gap-8 items-start">
           <div className="col-span-1">
@@ -73,19 +93,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {profiles.map((profile) => (
-                  <TalentCard
-                    key={profile.id}
-                    id={profile.id}
-                    display_name={profile.display_name}
-                    avatar_url={profile.avatar_url}
-                    roles={profile.roles}
-                    hourly_rate={profile.hourly_rate}
-                    bio={profile.bio}
-                  />
-                ))}
-              </div>
+              <TalentGrid profiles={profiles} />
             )}
           </main>
         </div>

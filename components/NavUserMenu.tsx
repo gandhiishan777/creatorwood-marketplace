@@ -9,16 +9,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/actions/auth";
 
 interface NavUserMenuProps {
   email?: string | null;
   displayName?: string | null;
+  avatarUrl?: string | null;
 }
 
-export function NavUserMenu({ email, displayName }: NavUserMenuProps) {
+export function NavUserMenu({ email, displayName, avatarUrl }: NavUserMenuProps) {
   const initials = displayName
     ? displayName.slice(0, 2).toUpperCase()
     : email
@@ -30,6 +31,7 @@ export function NavUserMenu({ email, displayName }: NavUserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full">
           <Avatar className="w-8 h-8">
+            <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? email ?? ""} />
             <AvatarFallback className="bg-indigo-600 text-white text-xs font-semibold">
               {initials ?? <User className="h-4 w-4" />}
             </AvatarFallback>

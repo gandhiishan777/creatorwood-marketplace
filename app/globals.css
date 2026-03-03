@@ -124,3 +124,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px 0 oklch(0.627 0.265 303.9 / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px 5px oklch(0.627 0.265 303.9 / 0.5);
+  }
+}
+
+.animate-glow {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes gradient-slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

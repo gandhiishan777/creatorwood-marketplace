@@ -27,6 +27,8 @@ export async function updateProfile(formData: FormData) {
   const hourlyRateRaw = formData.get("hourly_rate") as string | null;
   const hourly_rate = hourlyRateRaw ? parseFloat(hourlyRateRaw) : null;
 
+  const avatarUrl = (formData.get("avatar_url") as string) || null;
+
   const payload: TablesInsert<"profiles"> = {
     id: user.id,
     display_name: (formData.get("display_name") as string) ?? "",
@@ -34,6 +36,7 @@ export async function updateProfile(formData: FormData) {
     hourly_rate: isNaN(hourly_rate as number) ? null : hourly_rate,
     roles: roles.length > 0 ? roles : null,
     is_discoverable: formData.get("is_discoverable") === "true",
+    avatar_url: avatarUrl,
   };
 
   const { error } = await supabase.from("profiles").upsert(payload, {
@@ -45,5 +48,6 @@ export async function updateProfile(formData: FormData) {
   }
 
   revalidatePath("/settings");
+  revalidatePath("/", "layout");
   return { error: null };
 }

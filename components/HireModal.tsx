@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 interface HireModalProps {
   talentId: string
   talentName: string
+  glowing?: boolean
 }
 
 const initialState = { error: null }
@@ -43,7 +44,7 @@ function SubmitButton() {
   )
 }
 
-export function HireModal({ talentId, talentName }: HireModalProps) {
+export function HireModal({ talentId, talentName, glowing = false }: HireModalProps) {
   const router = useRouter()
   const [state, formAction] = useActionState(requestConnection, initialState)
 
@@ -59,7 +60,14 @@ export function HireModal({ talentId, talentName }: HireModalProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="lg" className="w-full">
+        <Button
+          size="lg"
+          className={
+            glowing
+              ? "w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 border-0"
+              : "w-full"
+          }
+        >
           Request Connection
         </Button>
       </DialogTrigger>

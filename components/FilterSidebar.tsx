@@ -14,31 +14,38 @@ export function FilterSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const currentRole = searchParams.get("role")
+  const selectedRoles = searchParams.get("roles")?.split(",").filter(Boolean) ?? []
   const currentMaxRate = searchParams.get("maxRate")
 
   const [displayRate, setDisplayRate] = useState(
     currentMaxRate ? Number(currentMaxRate) : 500
   )
 
-  function updateParam(key: string, value: string | null) {
+  function handleRoleChange(role: string, checked: boolean) {
+    const next = checked
+      ? [...selectedRoles, role]
+      : selectedRoles.filter((r) => r !== role)
+
     const params = new URLSearchParams(searchParams.toString())
-    if (value === null) {
-      params.delete(key)
+    if (next.length > 0) {
+      params.set("roles", next.join(","))
     } else {
-      params.set(key, value)
+      params.delete("roles")
     }
     const query = params.toString()
     router.push(pathname + (query ? `?${query}` : ""))
   }
 
-  function handleRoleChange(role: string, checked: boolean) {
-    updateParam("role", checked ? role : null)
-  }
-
   function handleRateCommit(values: number[]) {
     const rate = values[0]
-    updateParam("maxRate", rate === 500 ? null : String(rate))
+    const params = new URLSearchParams(searchParams.toString())
+    if (rate === 500) {
+      params.delete("maxRate")
+    } else {
+      params.set("maxRate", String(rate))
+    }
+    const query = params.toString()
+    router.push(pathname + (query ? `?${query}` : ""))
   }
 
   return (
@@ -55,7 +62,7 @@ export function FilterSidebar() {
               <div key={role} className="flex items-center gap-2.5">
                 <Checkbox
                   id={`role-${role}`}
-                  checked={currentRole === role}
+                  checked={selectedRoles.includes(role)}
                   onCheckedChange={(checked) =>
                     handleRoleChange(role, checked === true)
                   }

@@ -30,7 +30,7 @@ export default async function SettingsPage() {
             Tell the community who you are and what you do.
           </p>
         </div>
-        <ProfileForm profile={profile} />
+        <ProfileForm profile={profile} userId={user.id} />
       </div>
     </main>
   );

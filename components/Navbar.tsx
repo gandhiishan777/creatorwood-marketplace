@@ -10,6 +10,14 @@ export async function Navbar() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -38,7 +46,7 @@ export async function Navbar() {
           <ThemeToggle />
 
           {user ? (
-            <NavUserMenu email={user.email} />
+            <NavUserMenu email={user.email} avatarUrl={profile?.avatar_url ?? null} displayName={profile?.display_name ?? null} />
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
