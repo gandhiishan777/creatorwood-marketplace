@@ -4,6 +4,7 @@ import { FilterSidebar } from "@/components/FilterSidebar"
 import { TalentGrid } from "@/components/TalentGrid"
 import { CastingSearch } from "@/components/CastingSearch"
 import { MobileFilterSheet } from "@/components/MobileFilterSheet"
+import { AIConcierge } from "@/components/AIConcierge"
 import { createClient } from "@/utils/supabase/server"
 import { getSavedCreatorIds } from "@/app/actions/saved"
 
@@ -155,6 +156,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
           </main>
         </div>
       </div>
+
+      {enrichedProfiles && <AIConcierge profiles={enrichedProfiles} />}
     </div>
   )
 }
