@@ -224,7 +224,8 @@ function ReelSection({ creators }: { creators: Creator[] }) {
       id="reel"
       style={{
         position: 'relative',
-        padding: '140px 0',
+        paddingTop: 40,
+        paddingBottom: 140,
         background: '#0a0a0a',
         overflow: 'hidden',
       }}
@@ -319,10 +320,14 @@ function DiscoverMockup() {
   )
 }
 
-function PitchMockup() {
-  const [brief, setBrief] = useState('')
-  const [budget, setBudget] = useState('')
-  const [sent, setSent] = useState(false)
+function PitchMockup({ brief, setBrief, budget, setBudget, sent, setSent }: {
+  brief: string
+  setBrief: (v: string) => void
+  budget: string
+  setBudget: (v: string) => void
+  sent: boolean
+  setSent: (v: boolean) => void
+}) {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -402,7 +407,10 @@ function PitchMockup() {
   )
 }
 
-function ChatMockup() {
+function ChatMockup({ brief, budget, sent }: { brief: string; budget: string; sent: boolean }) {
+  // Show the user's brief and budget as the first messages when the pitch has been sent
+  const hasPitch = sent && (brief.trim() || budget.trim())
+
   return (
     <div style={{
       borderRadius: 14,
@@ -426,35 +434,87 @@ function ChatMockup() {
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
-          <div style={{
-            padding: '8px 12px', borderRadius: '12px 12px 4px 12px',
-            background: 'oklch(0.68 0.19 275)', color: '#0a0a0a', fontSize: 12,
-          }}>
-            Just reviewed the brief — love the direction.
-          </div>
-        </div>
-        <div style={{ alignSelf: 'flex-start', maxWidth: '80%' }}>
-          <div style={{
-            padding: '8px 12px', borderRadius: '12px 12px 12px 4px',
-            background: 'rgba(255,255,255,0.06)', color: '#f6f6f7', fontSize: 12,
-          }}>
-            Let&apos;s get on a call tomorrow at 10am?
-          </div>
-        </div>
-        {/* Typing indicator */}
-        <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: 4, padding: '0 4px' }}>
-          <span style={{ color: '#8a8a90', fontSize: 11 }}>You are typing</span>
-          <span style={{ display: 'flex', gap: 3 }}>
-            {[0, 1, 2].map(i => (
-              <span key={i} style={{
-                width: 4, height: 4, borderRadius: '50%', background: '#8a8a90',
-                animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                display: 'block',
-              }} />
-            ))}
-          </span>
-        </div>
+        {hasPitch ? (
+          <>
+            {/* User's brief as a sent message */}
+            {brief.trim() && (
+              <div style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
+                <div style={{
+                  padding: '8px 12px', borderRadius: '12px 12px 4px 12px',
+                  background: 'oklch(0.68 0.19 275)', color: '#0a0a0a', fontSize: 12,
+                }}>
+                  {brief.trim()}
+                </div>
+              </div>
+            )}
+            {/* Budget as a follow-up */}
+            {budget.trim() && (
+              <div style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
+                <div style={{
+                  padding: '8px 12px', borderRadius: '12px 12px 4px 12px',
+                  background: 'oklch(0.68 0.19 275)', color: '#0a0a0a', fontSize: 12,
+                }}>
+                  Budget: {budget.trim()}
+                </div>
+              </div>
+            )}
+            {/* Maya's response */}
+            <div style={{ alignSelf: 'flex-start', maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 12px', borderRadius: '12px 12px 12px 4px',
+                background: 'rgba(255,255,255,0.06)', color: '#f6f6f7', fontSize: 12,
+              }}>
+                Love this brief! Let me put together a mood board. Free for a call tomorrow?
+              </div>
+            </div>
+            {/* Typing indicator */}
+            <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: 4, padding: '0 4px' }}>
+              <span style={{ color: '#8a8a90', fontSize: 11 }}>You are typing</span>
+              <span style={{ display: 'flex', gap: 3 }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{
+                    width: 4, height: 4, borderRadius: '50%', background: '#8a8a90',
+                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    display: 'block',
+                  }} />
+                ))}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Default static messages */}
+            <div style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 12px', borderRadius: '12px 12px 4px 12px',
+                background: 'oklch(0.68 0.19 275)', color: '#0a0a0a', fontSize: 12,
+              }}>
+                Just reviewed the brief — love the direction.
+              </div>
+            </div>
+            <div style={{ alignSelf: 'flex-start', maxWidth: '80%' }}>
+              <div style={{
+                padding: '8px 12px', borderRadius: '12px 12px 12px 4px',
+                background: 'rgba(255,255,255,0.06)', color: '#f6f6f7', fontSize: 12,
+              }}>
+                Let&apos;s get on a call tomorrow at 10am?
+              </div>
+            </div>
+            {/* Typing indicator */}
+            <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: 4, padding: '0 4px' }}>
+              <span style={{ color: '#8a8a90', fontSize: 11 }}>You are typing</span>
+              <span style={{ display: 'flex', gap: 3 }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{
+                    width: 4, height: 4, borderRadius: '50%', background: '#8a8a90',
+                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                    display: 'block',
+                  }} />
+                ))}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -466,6 +526,11 @@ function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const stepsRef = useRef<(HTMLDivElement | null)[]>([])
   const pathRef = useRef<SVGPathElement>(null)
+
+  // Shared state between PitchMockup and ChatMockup
+  const [brief, setBrief] = useState('')
+  const [budget, setBudget] = useState('')
+  const [sent, setSent] = useState(false)
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
@@ -527,13 +592,13 @@ function HowItWorksSection() {
       num: '02',
       title: 'Send a pitch',
       desc: 'Drop a connection request with your brief and budget. No agencies, no retainers — just a direct line to the person who will do the work.',
-      mockup: <PitchMockup />,
+      mockup: <PitchMockup brief={brief} setBrief={setBrief} budget={budget} setBudget={setBudget} sent={sent} setSent={setSent} />,
     },
     {
       num: '03',
       title: 'Work together, live',
       desc: 'Collaborate in real time through our built-in workspace. Share files, give feedback, and ship faster than any traditional production pipeline.',
-      mockup: <ChatMockup />,
+      mockup: <ChatMockup brief={brief} budget={budget} sent={sent} />,
     },
   ]
 

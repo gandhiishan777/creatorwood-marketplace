@@ -740,25 +740,25 @@ export default function HeroStage({ images, onShattered, onHeroGone, scrollerRef
       const scrollerEl = scrollerRef.current;
       if (!scrollerEl) return;
 
-      // Remove fog so cards don't darken against the now-transparent bg
+      // Remove fog so cards stay bright
       scene.fog = null;
 
-      // Proxy for tweening renderer clear-alpha (background fade)
-      const bgProxy = { alpha: 0 };
-
       /*
-        Timeline total = 10 units → maps linearly to scroll progress through the 250vh container.
+        Simple scroll-out: the hero fades and the cards drift downward
+        as the user scrolls. The cascade images section below takes over
+        to fill the visual gap before Section 1.
 
-        Phase 1  0 → 3  (0–30 %) : cards drift & camera floats back — parallax feel
-        Phase 2  3 → 7  (30–70%): cards fall toward the creator grid, headline fades
-        Phase 3  7 → 10 (70–100%): canvas fades out, LandingSections revealed
+        Timeline: 10 units mapped to 150vh scroll container.
+        Phase 1  0 → 3  : headline fades, cards start drifting down
+        Phase 2  3 → 10 : everything fades out
       */
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: scrollerEl,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 1.5,
+          scrub: 0.6,
           onLeave: () => {
             if (stage && stage.style.display !== 'none') {
               stage.style.display = 'none';
@@ -769,29 +769,19 @@ export default function HeroStage({ images, onShattered, onHeroGone, scrollerRef
             if (stage) {
               stage.style.removeProperty('display');
               stage.style.opacity = '1';
-              rendererRef.current?.setClearAlpha(0);
             }
           },
         },
       });
 
-      // Phase 1: gentle drift + camera pull-back
-      tl.to(camera.position, { z: 5.5, ease: 'none', duration: 3 }, 0)
-        .to(cardGroup.rotation, { y: 0.25, ease: 'none', duration: 3 }, 0);
+      // Phase 1: headline fades, cards drift down with parallax
+      tl.to(postShatterEl, { opacity: 0, ease: 'power2.in', duration: 2 }, 0)
+        .to(cardGroup.position, { y: -3, ease: 'power2.in', duration: 6 }, 1)
+        .to(cardGroup.rotation, { x: 0.15, ease: 'none', duration: 6 }, 1)
+        .to(camera.position, { z: 8, ease: 'power2.inOut', duration: 5 }, 1);
 
-      // Phase 2: cards fall inward & shrink, headline fades out
-      tl.to(cardGroup.position, { y: -6, z: 14, ease: 'power2.in', duration: 4 }, 3)
-        .to(cardGroup.scale,    { x: 0.35, y: 0.35, z: 0.35, ease: 'power2.in', duration: 4 }, 3)
-        .to(cardGroup.rotation, { x: 0.4, ease: 'power1.in', duration: 4 }, 3)
-        .to(postShatterEl,      { opacity: 0, ease: 'power2.in', duration: 1.5 }, 3);
-
-      // Phase 3: whole stage fades out
-      tl.to(stage, { opacity: 0, ease: 'power2.in', duration: 2.5 }, 7)
-        .to(bgProxy, {
-          alpha: 0,
-          duration: 2.5,
-          onUpdate: () => rendererRef.current?.setClearAlpha(bgProxy.alpha),
-        }, 7);
+      // Phase 2: fade everything out
+      tl.to(stage, { opacity: 0, ease: 'power2.in', duration: 4 }, 6);
     }
 
     // ── Click handler ─────────────────────────────────────────────────────
