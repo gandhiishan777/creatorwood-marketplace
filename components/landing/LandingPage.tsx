@@ -286,27 +286,36 @@ export default function LandingPage({ portfolioImages, creators }: LandingPagePr
   return (
     <div style={{ background: '#0a0a0a' }}>
       {/*
-        150vh scroll container. The sticky hero occupies 100vh while the
-        extra 50vh of scroll travel drives the GSAP scroll-out animation.
+        The hero is position:fixed so it stays on screen while content scrolls under it.
+        The scroll spacer (250vh) drives the card animation via ScrollTrigger.
+        The hero fades out halfway through Section 1 (the ReelSection).
       */}
+
+      {/* Scroll spacer — drives the card animation */}
+      <div ref={heroScrollerRef} style={{ height: '250vh' }} />
+
+      {/* Hero — fixed overlay, fades out as Section 1 scrolls in */}
       <div
-        ref={heroScrollerRef}
-        style={{ height: '150vh', position: 'relative' }}
+        id="hero-overlay"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 5,
+          pointerEvents: shattered ? 'none' : 'auto',
+          // Gradient mask: full opacity top, fades to transparent at bottom
+          WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+        }}
       >
-        <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
-          <HeroStage
-            images={resolvedImages}
-            onShattered={handleShattered}
-            onHeroGone={handleHeroGone}
-            scrollerRef={heroScrollerRef}
-          />
-        </div>
+        <HeroStage
+          images={resolvedImages}
+          onShattered={handleShattered}
+          onHeroGone={handleHeroGone}
+          scrollerRef={heroScrollerRef}
+        />
       </div>
 
-      {/* Falling images cascade — fills the gap between hero and Section 1 */}
-      <CascadeSection images={resolvedImages} />
-
-      {/* Creator sections */}
+      {/* Creator sections — scroll under the fixed hero */}
       <LandingSections creators={creators} heroGone={heroGone} />
     </div>
   )

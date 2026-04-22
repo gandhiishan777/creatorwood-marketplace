@@ -740,48 +740,54 @@ export default function HeroStage({ images, onShattered, onHeroGone, scrollerRef
       const scrollerEl = scrollerRef.current;
       if (!scrollerEl) return;
 
-      // Remove fog so cards stay bright
+      // Remove fog so cards stay bright against transparent bg
       scene.fog = null;
 
-      /*
-        Simple scroll-out: the hero fades and the cards drift downward
-        as the user scrolls. The cascade images section below takes over
-        to fill the visual gap before Section 1.
-
-        Timeline: 10 units mapped to 150vh scroll container.
-        Phase 1  0 → 3  : headline fades, cards start drifting down
-        Phase 2  3 → 10 : everything fades out
-      */
+      const overlay = document.getElementById('hero-overlay');
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: scrollerEl,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.6,
-          onLeave: () => {
-            if (stage && stage.style.display !== 'none') {
-              stage.style.display = 'none';
-              onHeroGone?.();
-            }
-          },
-          onEnterBack: () => {
-            if (stage) {
-              stage.style.removeProperty('display');
-              stage.style.opacity = '1';
-            }
-          },
+          scrub: 0.8,
         },
       });
 
-      // Phase 1: headline fades, cards drift down with parallax
-      tl.to(postShatterEl, { opacity: 0, ease: 'power2.in', duration: 2 }, 0)
-        .to(cardGroup.position, { y: -3, ease: 'power2.in', duration: 6 }, 1)
-        .to(cardGroup.rotation, { x: 0.15, ease: 'none', duration: 6 }, 1)
-        .to(camera.position, { z: 8, ease: 'power2.inOut', duration: 5 }, 1);
+      // Headline fades immediately
+      tl.to(postShatterEl, { opacity: 0, ease: 'power2.in', duration: 1.5 }, 0);
 
-      // Phase 2: fade everything out
-      tl.to(stage, { opacity: 0, ease: 'power2.in', duration: 4 }, 6);
+      // Cards stay centered for most of the scroll, gentle drift
+      tl.to(cardGroup.position, { y: -1.5, ease: 'none', duration: 7 }, 2)
+        .to(camera.position, { z: 8.5, ease: 'none', duration: 7 }, 2);
+
+      // Last 30%: cards drift down more noticeably
+      tl.to(cardGroup.position, { y: -5, ease: 'power2.in', duration: 3 }, 7)
+        .to(cardGroup.rotation, { x: 0.1, ease: 'power1.in', duration: 3 }, 7);
+
+      // Fade the overlay out when the ReelSection (#reel) is halfway through the viewport.
+      // Section 1 content is already visible underneath while the hero dissolves.
+      ScrollTrigger.create({
+        trigger: '#reel',
+        start: 'top 80%',
+        end: 'center center',
+        scrub: 1,
+        onUpdate: (self) => {
+          if (overlay) {
+            overlay.style.opacity = String(1 - self.progress);
+          }
+        },
+        onLeave: () => {
+          if (overlay) overlay.style.display = 'none';
+          onHeroGone?.();
+        },
+        onEnterBack: () => {
+          if (overlay) {
+            overlay.style.removeProperty('display');
+            overlay.style.opacity = '1';
+          }
+        },
+      });
     }
 
     // ── Click handler ─────────────────────────────────────────────────────

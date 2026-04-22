@@ -525,7 +525,13 @@ function ChatMockup({ brief, budget, sent }: { brief: string; budget: string; se
 function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const stepsRef = useRef<(HTMLDivElement | null)[]>([])
-  const pathRef = useRef<SVGPathElement>(null)
+  const pathRef  = useRef<SVGPathElement>(null)
+  const path2Ref = useRef<SVGPathElement>(null)
+  const path3Ref = useRef<SVGPathElement>(null)
+  const svgRef   = useRef<SVGSVGElement>(null)
+  const glowPath1Ref = useRef<SVGPathElement>(null)
+  const glowPath2Ref = useRef<SVGPathElement>(null)
+  const glowPath3Ref = useRef<SVGPathElement>(null)
 
   // Shared state between PitchMockup and ChatMockup
   const [brief, setBrief] = useState('')
@@ -535,7 +541,7 @@ function HowItWorksSection() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
 
-    // Animate each step
+    // Animate each step card
     stepsRef.current.forEach((step, i) => {
       if (!step) return
       gsap.fromTo(
@@ -556,25 +562,110 @@ function HowItWorksSection() {
       )
     })
 
-    // Animate SVG connector path on scroll
-    if (pathRef.current) {
-      const length = pathRef.current.getTotalLength()
-      gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length })
-      gsap.to(pathRef.current, {
+    // Draw-on animation for all paths — scrubbed to the FULL section scroll
+    const allPaths = [
+      pathRef.current, path2Ref.current, path3Ref.current,
+      glowPath1Ref.current, glowPath2Ref.current, glowPath3Ref.current,
+    ]
+    allPaths.forEach((p) => {
+      if (!p) return
+      const length = p.getTotalLength()
+      gsap.set(p, { strokeDasharray: length, strokeDashoffset: length })
+    })
+
+    // Main paths draw on scrubbed to section scroll
+    const mainPaths = [pathRef.current, path2Ref.current, path3Ref.current]
+    const glowPaths = [glowPath1Ref.current, glowPath2Ref.current, glowPath3Ref.current]
+
+    // All lines draw from left to right as you scroll through the section
+    mainPaths.forEach((p, i) => {
+      if (!p) return
+      const length = p.getTotalLength()
+      gsap.to(p, {
         strokeDashoffset: 0,
         ease: 'none',
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: 'top 70%',
-          end: 'bottom 30%',
-          scrub: 1,
+          start: 'top 80%',
+          end: 'center 60%',
+          scrub: true,
         },
+      })
+    })
+
+    // Glow paths draw slightly behind the main paths
+    glowPaths.forEach((p) => {
+      if (!p) return
+      gsap.to(p, {
+        strokeDashoffset: 0,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 75%',
+          end: 'center 55%',
+          scrub: true,
+        },
+      })
+    })
+
+    // Step nodes pop in as the line reaches them
+    if (svgRef.current) {
+      const nodes = svgRef.current.querySelectorAll('.step-node')
+      nodes.forEach((node, i) => {
+        gsap.fromTo(node,
+          { scale: 0, transformOrigin: 'center center', opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.6,
+            ease: 'back.out(3)',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              // Each node appears at roughly 1/3 intervals through the section
+              start: `${20 + i * 25}% center`,
+              once: true,
+            },
+          }
+        )
+      })
+
+      // Traveling particles start after lines are partially drawn
+      const particles = svgRef.current.querySelectorAll('.travel-dot')
+      particles.forEach((dot, i) => {
+        const p = mainPaths[i % mainPaths.length]
+        if (!p) return
+        const length = p.getTotalLength()
+
+        function animateParticle() {
+          const proxy = { t: 0 }
+          gsap.to(proxy, {
+            t: 1,
+            duration: 3 + i * 1.2,
+            ease: 'none',
+            repeat: -1,
+            delay: i * 0.8,
+            onUpdate: () => {
+              const pt = p!.getPointAtLength(proxy.t * length)
+              gsap.set(dot, { attr: { cx: pt.x, cy: pt.y } })
+            },
+          })
+        }
+
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: '40% center',
+          once: true,
+          onEnter: animateParticle,
+        })
       })
     }
 
     return () => {
       ScrollTrigger.getAll().forEach(t => {
-        if (t.vars.trigger && stepsRef.current.some(s => s === t.vars.trigger || t.vars.trigger === sectionRef.current)) {
+        if (t.vars.trigger && (
+          stepsRef.current.some(s => s === t.vars.trigger) ||
+          t.vars.trigger === sectionRef.current
+        )) {
           t.kill()
         }
       })
@@ -611,6 +702,7 @@ function HowItWorksSection() {
         padding: '140px 28px',
         background: '#0a0a0a',
         borderTop: '1px solid rgba(255,255,255,0.08)',
+        overflow: 'hidden',
       }}
     >
       <style>{`
@@ -620,7 +712,7 @@ function HowItWorksSection() {
         }
       `}</style>
 
-      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ marginBottom: 16 }}>
           <span style={{
             fontFamily: 'var(--font-geist-mono), monospace',
@@ -649,23 +741,129 @@ function HowItWorksSection() {
           <em style={{ color: '#eadfff', fontStyle: 'italic' }}>no middlemen.</em>
         </h2>
 
-        {/* Decorative SVG connector */}
-        <div style={{ position: 'relative', height: 0, overflow: 'visible', pointerEvents: 'none' }}>
+        {/*
+          SVG connector overlay — spans the full section.
+          Three intertwining lines draw left-to-right as you scroll.
+          Line 3 rises from below the card area.
+        */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 0,
+          overflow: 'hidden',
+        }}>
           <svg
+            ref={svgRef}
             width="100%"
-            height="80"
-            viewBox="0 0 1200 80"
+            height="100%"
+            viewBox="0 0 100 100"
             preserveAspectRatio="none"
-            style={{ position: 'absolute', top: 0, left: 0 }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
             aria-hidden
           >
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7c5cbf" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#a78bfa" stopOpacity="1" />
+                <stop offset="100%" stopColor="#7c5cbf" stopOpacity="0.9" />
+              </linearGradient>
+              <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.7" />
+                <stop offset="50%" stopColor="#818cf8" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.7" />
+              </linearGradient>
+              <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#c084fc" stopOpacity="0.5" />
+                <stop offset="50%" stopColor="#e9d5ff" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#c084fc" stopOpacity="0.5" />
+              </linearGradient>
+              <filter id="glow1" x="-5%" y="-50%" width="110%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+              </filter>
+              <filter id="glow2" x="-5%" y="-50%" width="110%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.3" />
+              </filter>
+              <radialGradient id="nodeGlow">
+                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.7" />
+                <stop offset="50%" stopColor="#7c5cbf" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#7c5cbf" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/*
+              Line 1 — primary violet, spans full width left to right.
+              Weaves up and down through the section.
+              x: 0 = left edge, 100 = right edge
+              y: ~20 = heading area, ~60 = card area
+            */}
+            <path
+              ref={glowPath1Ref}
+              d="M0 22 C8 28, 12 18, 17 24 C25 32, 30 20, 38 28 C45 35, 48 22, 55 30 C62 38, 68 24, 75 32 C82 26, 88 35, 95 28 L100 30"
+              fill="none" stroke="#7c5cbf" strokeWidth="0.8" opacity="0.15" filter="url(#glow1)"
+            />
             <path
               ref={pathRef}
-              d="M0 40 C200 40, 250 10, 400 40 S650 70, 800 40 S1050 10, 1200 40"
-              fill="none"
-              stroke="oklch(0.68 0.19 275 / 0.3)"
-              strokeWidth="1.5"
+              d="M0 22 C8 28, 12 18, 17 24 C25 32, 30 20, 38 28 C45 35, 48 22, 55 30 C62 38, 68 24, 75 32 C82 26, 88 35, 95 28 L100 30"
+              fill="none" stroke="url(#grad1)" strokeWidth="0.22" strokeLinecap="round"
             />
+
+            {/*
+              Line 2 — indigo, weaves opposite to line 1.
+            */}
+            <path
+              ref={glowPath2Ref}
+              d="M0 30 C7 22, 14 35, 20 28 C28 20, 34 34, 42 26 C48 20, 54 36, 60 28 C68 20, 74 34, 80 26 C86 20, 92 32, 100 24"
+              fill="none" stroke="#6366f1" strokeWidth="0.6" opacity="0.12" filter="url(#glow1)"
+            />
+            <path
+              ref={path2Ref}
+              d="M0 30 C7 22, 14 35, 20 28 C28 20, 34 34, 42 26 C48 20, 54 36, 60 28 C68 20, 74 34, 80 26 C86 20, 92 32, 100 24"
+              fill="none" stroke="url(#grad2)" strokeWidth="0.14" strokeLinecap="round"
+            />
+
+            {/*
+              Line 3 — rises from below the cards, starts at bottom-left and curves up to the right.
+            */}
+            <path
+              ref={glowPath3Ref}
+              d="M10 95 C15 80, 18 70, 25 60 C32 50, 38 58, 45 48 C52 40, 58 52, 65 42 C72 34, 78 44, 85 36 C90 30, 95 38, 100 32"
+              fill="none" stroke="#c084fc" strokeWidth="0.5" opacity="0.1" filter="url(#glow2)"
+            />
+            <path
+              ref={path3Ref}
+              d="M10 95 C15 80, 18 70, 25 60 C32 50, 38 58, 45 48 C52 40, 58 52, 65 42 C72 34, 78 44, 85 36 C90 30, 95 38, 100 32"
+              fill="none" stroke="url(#grad3)" strokeWidth="0.12" strokeLinecap="round" strokeDasharray="0.8 0.5"
+            />
+
+            {/* Step nodes — glowing orbs at each column (x ≈ 17, 50, 83 for 3 columns) */}
+            {[
+              { cx: 17, cy: 24 },
+              { cx: 50, cy: 30 },
+              { cx: 83, cy: 32 },
+            ].map((n, i) => (
+              <g key={i} className="step-node">
+                <circle cx={n.cx} cy={n.cy} r="2.2" fill="url(#nodeGlow)" />
+                <circle cx={n.cx} cy={n.cy} r="1" fill="none" stroke="#a78bfa" strokeWidth="0.08" opacity="0.5" />
+                <circle cx={n.cx} cy={n.cy} r="0.6" fill="#7c5cbf" opacity="0.35" />
+                <circle cx={n.cx} cy={n.cy} r="0.3" fill="#a78bfa" />
+                <circle cx={n.cx} cy={n.cy} r="0.12" fill="#e9d5ff" />
+              </g>
+            ))}
+
+            {/* Traveling particles */}
+            <circle className="travel-dot" r="0.35" fill="#a78bfa" opacity="0.9">
+              <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite" />
+            </circle>
+            <circle className="travel-dot" r="0.25" fill="#818cf8" opacity="0.7">
+              <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle className="travel-dot" r="0.3" fill="#e9d5ff" opacity="0.6">
+              <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.8s" repeatCount="indefinite" />
+            </circle>
           </svg>
         </div>
 
@@ -675,6 +873,8 @@ function HowItWorksSection() {
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 40,
           marginTop: 80,
+          position: 'relative',
+          zIndex: 1,
         }}>
           {steps.map((step, i) => (
             <div
