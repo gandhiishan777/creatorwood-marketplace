@@ -1,15 +1,12 @@
 import { notFound } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/utils/supabase/server"
-import { GlowButton, CinematicPresenceStatus } from "@/components/ProfileHero"
+import { GlowButton } from "@/components/ProfileHero"
+import { CinematicHero } from "@/components/CinematicHero"
 import { PortfolioGallery } from "@/components/PortfolioGallery"
-import { RatingSummary, TestimonialsList } from "@/components/ReviewsDisplay"
-import { SaveButton } from "@/components/SaveButton"
+import { TestimonialsList } from "@/components/ReviewsDisplay"
 import { AnimateOnScroll } from "@/components/AnimateOnScroll"
-import { PageContainer } from "@/components/PageContainer"
 import { getSavedCreatorIds } from "@/app/actions/saved"
-import { getInitials } from "@/lib/utils"
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>
@@ -50,7 +47,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   }
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const savedIds = await getSavedCreatorIds()
   const isSaved = savedIds.has(id)
 
@@ -70,181 +66,210 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         ) / 10
       : null
 
-  const heroImage = (portfolioItems ?? []).find(
-    (item) => item.thumbnail_url
-  )?.thumbnail_url
+  const heroImage =
+    (portfolioItems ?? []).find((item) => item.thumbnail_url)?.thumbnail_url ??
+    null
   const tagline = extractTagline(profile.bio)
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Full-bleed cinematic hero */}
-      <section className="relative h-[55vh] min-h-[400px] w-full overflow-hidden">
-        {heroImage ? (
-          <img
-            src={heroImage}
-            alt={`${profile.display_name}'s featured work`}
-            className="size-full object-cover animate-[ken-burns_25s_ease-in-out_infinite]"
-          />
-        ) : (
-          <div className="size-full hero-gradient-brand" />
-        )}
+    <div className="min-h-screen bg-[#131315]">
+      {/* Fixed atmospheric background */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }}
+        />
+        {/* Violet glow blob — top-left */}
+        <div
+          className="absolute -top-64 -left-32 h-[600px] w-[600px] rounded-full opacity-10"
+          style={{
+            background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        {/* Indigo glow blob — bottom-right */}
+        <div
+          className="absolute -bottom-64 -right-32 h-[500px] w-[500px] rounded-full opacity-10"
+          style={{
+            background: "radial-gradient(circle, #6366f1 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+      </div>
 
-        {/* Gradient overlay */}
-        <div className="hero-gradient absolute inset-0" />
+      {/* Cinematic Hero */}
+      <div className="relative z-10">
+        <CinematicHero
+          displayName={profile.display_name}
+          roles={profile.roles ?? undefined}
+          heroImage={heroImage}
+          avatarUrl={profile.avatar_url ?? null}
+          userId={profile.id}
+          isSaved={isSaved}
+          isAuthenticated={!!user}
+          hourlyRate={profile.hourly_rate ?? null}
+        />
+      </div>
 
-        {/* Profile info overlaid at the bottom */}
-        <div className="absolute inset-x-0 bottom-0 z-10">
-          <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
-              {/* Avatar overlapping the boundary */}
-              <Avatar className="size-24 shrink-0 ring-4 ring-white/20 shadow-2xl sm:size-28">
-                <AvatarImage
-                  src={profile.avatar_url ?? undefined}
-                  alt={profile.display_name}
-                />
-                <AvatarFallback className="text-3xl bg-black/40 text-white">
-                  {getInitials(profile.display_name)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="flex flex-col gap-2 pb-1">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="font-display text-5xl tracking-tight text-white sm:text-6xl">
-                    {profile.display_name}
-                  </h1>
-                  <div className="flex items-center gap-3">
-                    <CinematicPresenceStatus userId={profile.id} />
-                    <SaveButton
-                      creatorId={profile.id}
-                      initialSaved={isSaved}
-                      size="md"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {profile.hourly_rate != null && (
-                    <span className="text-base text-white/80">
-                      <span className="font-semibold text-white">
-                        ${profile.hourly_rate}
-                      </span>
-                      /hr
-                    </span>
-                  )}
-
-                  {profile.roles && profile.roles.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.roles.map((role: string) => (
-                        <Badge
-                          key={role}
-                          variant="secondary"
-                          className="border-white/20 bg-white/10 text-white backdrop-blur-sm"
-                        >
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Content area */}
-      <PageContainer maxWidth="lg">
-        {/* Pull-quote tagline */}
+      {/* Main Content */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {tagline && (
           <AnimateOnScroll className="mb-10">
-            <blockquote className="border-l-4 border-brand/40 pl-5">
-              <p className="font-display text-2xl italic tracking-tight text-foreground/80">
+            <blockquote className="border-l-4 border-[#8B5CF6]/40 pl-5">
+              <p className="font-display text-2xl italic tracking-tight text-white/70">
                 {tagline}
               </p>
             </blockquote>
           </AnimateOnScroll>
         )}
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-          {/* Left column -- Portfolio */}
-          <AnimateOnScroll delay={0.05} className="lg:col-span-3 flex flex-col gap-4">
-            <h2 className="font-display text-xl tracking-tight">Portfolio</h2>
+        <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Left column — portfolio (2/3) */}
+          <AnimateOnScroll delay={0.05} className="flex flex-col gap-4 lg:w-2/3">
+            <h2 className="font-display text-xl tracking-tight text-white">
+              Portfolio
+            </h2>
             <PortfolioGallery
               items={portfolioItems ?? []}
               creatorName={profile.display_name}
             />
           </AnimateOnScroll>
 
-          {/* Right column -- About + Rating + CTA */}
-          <AnimateOnScroll delay={0.1} className="lg:col-span-2 flex flex-col gap-6">
-            {/* Rating Summary */}
-            <RatingSummary avgRating={avgRating} totalCount={totalReviews} />
-
-            {/* About */}
-            <div className="rounded-2xl border bg-card p-6">
-              <h2 className="mb-4 font-display text-xl tracking-tight">
-                About
-              </h2>
-              {profile.bio ? (
-                <div className="border-l-2 border-brand/30 pl-4">
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
-                    {profile.bio}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  This creator hasn&apos;t added a bio yet.
-                </p>
-              )}
-
-              {profile.roles && profile.roles.length > 0 && (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {profile.roles.map((role: string) => (
-                    <Badge
-                      key={role}
-                      variant="outline"
-                      className="text-muted-foreground"
-                    >
-                      {role}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Work Together */}
-            <div className="rounded-2xl border border-brand/20 bg-gradient-to-br from-brand/5 via-card to-brand/10 py-8 px-6">
-              <h2 className="mb-1 font-display text-lg tracking-tight">
-                Like what you see?
-              </h2>
-              {profile.hourly_rate != null ? (
-                <p className="mb-5 text-sm text-muted-foreground">
-                  Starting at{" "}
-                  <span className="font-semibold text-foreground">
-                    ${profile.hourly_rate}/hr
-                  </span>
-                </p>
-              ) : (
-                <p className="mb-5 text-sm text-muted-foreground">
-                  Send a message to start a conversation.
-                </p>
-              )}
-              <GlowButton
-                talentId={profile.id}
-                talentName={profile.display_name}
-                isAuthenticated={!!user}
-              />
-            </div>
-          </AnimateOnScroll>
-
-          {/* Testimonials -- full width below */}
-          {reviewList.length > 0 && (
-            <AnimateOnScroll delay={0.15} className="lg:col-span-5">
-              <TestimonialsList reviews={reviewList} />
+          {/* Right column — about + CTA (1/3) */}
+          <div className="flex flex-col gap-6 lg:w-1/3">
+            {/* Reviews summary panel */}
+            <AnimateOnScroll delay={0.1}>
+              <div
+                className="rounded-2xl p-6"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                <h2 className="mb-3 font-display text-xl tracking-tight text-white">
+                  Reviews
+                </h2>
+                {totalReviews === 0 || avgRating == null ? (
+                  <p className="text-sm text-white/40 italic">No reviews yet</p>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-white">
+                      {avgRating}
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <svg
+                            key={s}
+                            className={`size-4 ${
+                              s <= Math.round(avgRating)
+                                ? "text-amber-400"
+                                : "text-white/20"
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-xs text-white/50">
+                        {totalReviews}{" "}
+                        {totalReviews === 1 ? "review" : "reviews"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </AnimateOnScroll>
-          )}
+
+            {/* About panel */}
+            <AnimateOnScroll delay={0.15}>
+              <div
+                className="rounded-2xl p-6"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                <h2 className="mb-4 font-display text-xl tracking-tight text-white">
+                  About
+                </h2>
+                {profile.bio ? (
+                  <div className="border-l-2 border-[#8B5CF6]/30 pl-4">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-white/70">
+                      {profile.bio}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/40 italic">
+                    This creator hasn&apos;t added a bio yet.
+                  </p>
+                )}
+                {profile.roles && profile.roles.length > 0 && (
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {profile.roles.map((role: string) => (
+                      <Badge
+                        key={role}
+                        variant="outline"
+                        className="border-white/10 text-white/50"
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </AnimateOnScroll>
+
+            {/* CTA panel */}
+            <AnimateOnScroll delay={0.2}>
+              <div
+                className="rounded-2xl py-8 px-6"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  backdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                <h2 className="mb-1 font-display text-lg tracking-tight text-white">
+                  Like what you see?
+                </h2>
+                {profile.hourly_rate != null ? (
+                  <p className="mb-5 text-sm text-white/50">
+                    Starting at{" "}
+                    <span className="font-semibold text-white">
+                      ${profile.hourly_rate}/hr
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mb-5 text-sm text-white/50">
+                    Send a message to start a conversation.
+                  </p>
+                )}
+                <GlowButton
+                  talentId={profile.id}
+                  talentName={profile.display_name}
+                  isAuthenticated={!!user}
+                />
+              </div>
+            </AnimateOnScroll>
+          </div>
         </div>
-      </PageContainer>
+
+        {/* Testimonials — full width below both columns */}
+        {reviewList.length > 0 && (
+          <AnimateOnScroll delay={0.15} className="mt-8">
+            <TestimonialsList reviews={reviewList} />
+          </AnimateOnScroll>
+        )}
+      </div>
     </div>
   )
 }

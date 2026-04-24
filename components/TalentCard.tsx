@@ -3,11 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowRight, Star } from "lucide-react"
-import { MOTION } from "@/lib/motion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { PresenceIndicator } from "@/components/PresenceIndicator"
 import { SaveButton } from "@/components/SaveButton"
 import { getInitials } from "@/lib/utils"
 
@@ -24,8 +19,10 @@ export interface TalentCardProfile {
 }
 
 interface TalentCardProps extends TalentCardProfile {
-  featured?: boolean
+  aspectClass?: string
 }
+
+const DEFAULT_ASPECT = "aspect-[3/4]"
 
 function ThumbnailCycler({
   thumbnails,
@@ -35,7 +32,6 @@ function ThumbnailCycler({
   displayName: string
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [isHovering, setIsHovering] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const startCycling = useCallback(() => {
@@ -61,8 +57,8 @@ function ThumbnailCycler({
 
   if (thumbnails.length === 0) {
     return (
-      <div className="flex size-full items-center justify-center bg-gradient-to-br from-accent via-muted to-accent/60">
-        <span className="text-3xl font-bold text-muted-foreground/30 select-none">
+      <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#1a1a1d] via-[#141416] to-[#1a1a1d]">
+        <span className="font-display text-4xl text-white/20 select-none">
           {getInitials(displayName)}
         </span>
       </div>
@@ -72,14 +68,8 @@ function ThumbnailCycler({
   return (
     <div
       className="relative size-full"
-      onMouseEnter={() => {
-        setIsHovering(true)
-        startCycling()
-      }}
-      onMouseLeave={() => {
-        setIsHovering(false)
-        stopCycling()
-      }}
+      onMouseEnter={startCycling}
+      onMouseLeave={stopCycling}
     >
       <AnimatePresence mode="wait">
         <motion.img
@@ -93,35 +83,6 @@ function ThumbnailCycler({
           className="size-full object-cover"
         />
       </AnimatePresence>
-
-      {/* Dot indicators */}
-      {thumbnails.length > 1 && (
-        <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-          {thumbnails.map((_, i) => (
-            <span
-              key={i}
-              className={`size-1.5 rounded-full transition-all duration-200 ${
-                i === activeIndex
-                  ? "bg-white scale-125"
-                  : "bg-white/40"
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Frosted glass "View Profile" bar — slides up on hover */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t border-white/20 bg-white/10 px-4 py-2.5 backdrop-blur-md transition-transform duration-300 ${
-          isHovering ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
-        <span className="text-xs font-semibold text-white">View Profile</span>
-        <ArrowRight className="size-3.5 text-white" />
-      </div>
-
-      {/* Bottom gradient for avatar overlap */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card/80 to-transparent" />
     </div>
   )
 }
@@ -129,98 +90,58 @@ function ThumbnailCycler({
 export function TalentCard({
   id,
   display_name,
-  avatar_url,
+  avatar_url: _avatar_url,
   roles,
-  hourly_rate,
+  hourly_rate: _hourly_rate,
   portfolio_thumbnails,
   avg_rating,
   review_count,
   isSaved = false,
-  featured = false,
+  aspectClass = DEFAULT_ASPECT,
 }: TalentCardProps) {
+  const primaryRole = roles?.[0]
+  const isCurated = avg_rating != null && avg_rating >= 4.8 && review_count > 0
+
   return (
     <Link href={`/profile/${id}`} className="group block">
-      <motion.div
-        whileHover={{ y: -4 }}
-        transition={MOTION.spring}
-        className="relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-shadow duration-300 hover:shadow-lg"
-      >
-        {/* Stacking card illusion */}
-        <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 -z-10 h-4 rounded-b-xl border border-border/30 bg-card/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        {/* Portfolio Thumbnail */}
-        <div className={`relative overflow-hidden bg-muted ${featured ? "aspect-[4/3]" : "aspect-video"}`}>
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#131315] transition-all duration-300 group-hover:border-[#8B5CF6]/40 group-hover:shadow-[0_0_28px_rgba(139,92,246,0.18)]">
+        {/* Thumbnail */}
+        <div className={`relative overflow-hidden bg-[#0e0e10] ${aspectClass}`}>
           <ThumbnailCycler
             thumbnails={portfolio_thumbnails}
             displayName={display_name}
           />
 
-          {/* Save button — top right */}
-          <div className="absolute right-2.5 top-2.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0 max-sm:opacity-100">
+          {/* Subtle bottom gradient for legibility of any overlay state */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#131315]/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          {/* Curated badge — top right */}
+          {isCurated && (
+            <div className="absolute right-2.5 top-2.5 z-10 pointer-events-none">
+              <span className="rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6]/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-[#d0bcff] backdrop-blur-md">
+                Curated
+              </span>
+            </div>
+          )}
+
+          {/* Save — top left, appears on hover */}
+          <div className="absolute left-2.5 top-2.5 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100 max-sm:opacity-100">
             <SaveButton creatorId={id} initialSaved={isSaved} size="sm" />
           </div>
         </div>
 
-        {/* Identity */}
-        <div className="px-4 pb-4">
-          <div className="-mt-6 mb-3">
-            <div className="relative inline-flex">
-              <Avatar className="size-12 ring-2 ring-background">
-                <AvatarImage src={avatar_url ?? undefined} alt={display_name} />
-                <AvatarFallback className="text-sm">
-                  {getInitials(display_name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5">
-                <PresenceIndicator userId={id} size="sm" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate font-display text-lg leading-tight">
-                  {display_name}
-                </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {hourly_rate != null ? `$${hourly_rate}/hr` : "Rate negotiable"}
-                </p>
-              </div>
-              {avg_rating != null && review_count > 0 && (
-                <div className="flex shrink-0 items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5">
-                  <Star className="size-3 fill-amber-500 text-amber-500" />
-                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                    {avg_rating}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    ({review_count})
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {roles && roles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {roles.slice(0, 3).map((role: string) => (
-                  <Badge
-                    key={role}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {role}
-                  </Badge>
-                ))}
-                {roles.length > 3 && (
-                  <Badge variant="outline" className="text-xs text-muted-foreground">
-                    +{roles.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
+        {/* Identity — minimal */}
+        <div className="px-3.5 py-3">
+          <p className="truncate font-display text-lg leading-tight text-white">
+            {display_name}
+          </p>
+          {primaryRole && (
+            <p className="mt-0.5 truncate text-xs text-white/50">
+              {primaryRole}
+            </p>
+          )}
         </div>
-      </motion.div>
+      </div>
     </Link>
   )
 }

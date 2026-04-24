@@ -102,7 +102,11 @@ function GalleryItem({
   hero?: boolean
   creatorName?: string
 }) {
-  const [loaded, setLoaded] = useState(false)
+  // For video embeds the url is an iframe src, not an image — only use thumbnail_url
+  const imgSrc = item.thumbnail_url ?? (item.type !== "video_embed" ? item.url : null)
+
+  // If there's no image to load, start in the loaded state so the shimmer never shows
+  const [loaded, setLoaded] = useState(!imgSrc)
   const onLoad = useCallback(() => setLoaded(true), [])
 
   const altText = item.title ?? (creatorName ? `${creatorName}'s ${item.type === "video_embed" ? "video" : "work"}` : "Portfolio piece")
@@ -113,19 +117,26 @@ function GalleryItem({
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-card p-6 transition-all hover:border-border hover:bg-accent/50"
+        className={`group relative block overflow-hidden rounded-xl border border-[#8B5CF6]/20 bg-[#0e0e10] transition-all duration-300 hover:border-[#8B5CF6]/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] ${
+          hero ? "aspect-[16/10] rounded-none" : "aspect-video"
+        }`}
       >
-        <ExternalLink className="size-5 text-muted-foreground transition-colors group-hover:text-foreground" />
-        <span className="text-sm font-medium">{item.title || "External Link"}</span>
-        <span className="text-xs text-muted-foreground">
-          {(() => {
-            try {
-              return new URL(item.url).hostname
-            } catch {
-              return item.url
-            }
-          })()}
-        </span>
+        {/* Subtle violet tint background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#8B5CF6]/5 via-transparent to-[#6366f1]/5" />
+
+        {/* Centered icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex size-12 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 transition-all duration-300 group-hover:border-[#8B5CF6]/60 group-hover:bg-[#8B5CF6]/20">
+            <ExternalLink className="size-5 text-[#8B5CF6]" />
+          </div>
+        </div>
+
+        {/* Bottom gradient + title */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8">
+          <p className="truncate text-sm font-medium text-white/90">
+            {item.title || "External Link"}
+          </p>
+        </div>
       </a>
     )
   }
@@ -139,15 +150,16 @@ function GalleryItem({
         hero ? "aspect-[16/10] rounded-none" : item.type === "video_embed" ? "aspect-video rounded-xl" : "rounded-xl"
       }`}
     >
-      {!loaded && (
-        <div className="absolute inset-0 animate-shimmer" />
+      {!loaded && <div className="absolute inset-0 animate-shimmer" />}
+      {imgSrc && (
+        <img
+          src={imgSrc}
+          alt={altText}
+          onLoad={onLoad}
+          onError={onLoad}
+          className={`size-full object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
       )}
-      <img
-        src={item.thumbnail_url ?? item.url}
-        alt={altText}
-        onLoad={onLoad}
-        className={`size-full object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
-      />
 
       {item.type === "video_embed" && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -181,7 +193,13 @@ export function PortfolioGallery({ items, creatorName }: PortfolioGalleryProps) 
     )
   }
 
-  const [hero, ...rest] = items
+  // Show images/videos first; links are supplementary and go at the end
+  const sorted = [...items].sort((a, b) =>
+    a.type === "link" && b.type !== "link" ? 1
+    : a.type !== "link" && b.type === "link" ? -1
+    : 0
+  )
+  const [hero, ...rest] = sorted
 
   return (
     <>

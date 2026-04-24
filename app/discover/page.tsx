@@ -1,25 +1,16 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { FilterSidebar } from "@/components/FilterSidebar"
 import { TalentGrid } from "@/components/TalentGrid"
-import { CastingSearch } from "@/components/CastingSearch"
-import { MobileFilterSheet } from "@/components/MobileFilterSheet"
 import { AIConcierge } from "@/components/AIConcierge"
 import { SortSelect } from "@/components/SortSelect"
-import { PageContainer } from "@/components/PageContainer"
-import { AnimateOnScroll } from "@/components/AnimateOnScroll"
+import { RolePillFilters } from "@/components/RolePillFilters"
+import { PriceFilter } from "@/components/PriceFilter"
 import { createClient } from "@/utils/supabase/server"
 import { getSavedCreatorIds } from "@/app/actions/saved"
 import { enrichProfilesWithMeta } from "@/lib/enrich-profiles"
 
 interface DiscoverPageProps {
   searchParams: Promise<{ roles?: string; maxRate?: string; q?: string; sort?: string }>
-}
-
-function FilterSidebarFallback() {
-  return (
-    <div className="h-64 animate-pulse rounded-xl border bg-card shadow-sm" />
-  )
 }
 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
@@ -79,70 +70,85 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   const hasFilters = Boolean(roles || maxRate || q || sort)
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageContainer>
-        <AnimateOnScroll className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl tracking-tight">
-              Discover Talent
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Find the right creative professional for your next project.
-            </p>
-          </div>
-          {/* Mobile filter trigger */}
-          <div className="md:hidden">
-            <Suspense fallback={null}>
-              <MobileFilterSheet />
-            </Suspense>
-          </div>
-        </AnimateOnScroll>
+    <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Fixed atmospheric glow */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          className="absolute -top-48 left-1/3 h-[500px] w-[500px] rounded-full opacity-[0.07]"
+          style={{ background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)", filter: "blur(80px)" }}
+        />
+        <div
+          className="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)", filter: "blur(80px)" }}
+        />
+        {/* Right-edge violet wash */}
+        <div
+          className="absolute inset-y-0 right-0 w-[45%]"
+          style={{
+            background:
+              "radial-gradient(ellipse at right center, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0.08) 35%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute right-0 top-0 h-full w-px"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent 0%, rgba(139,92,246,0.5) 50%, transparent 100%)",
+          }}
+        />
+      </div>
 
-        <Suspense fallback={null}>
-          <CastingSearch />
-        </Suspense>
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 items-start">
-          <div className="col-span-1 hidden md:block">
-            <Suspense fallback={<FilterSidebarFallback />}>
-              <FilterSidebar />
-            </Suspense>
-          </div>
-
-          <main className="col-span-1 md:col-span-3">
-            {sorted.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-20 text-center shadow-sm">
-                <p className="text-lg font-medium">No talent found</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {hasFilters
-                    ? "Try broadening your filters to see more creators."
-                    : "No discoverable profiles yet. Check back soon."}
-                </p>
-                {hasFilters && (
-                  <Link
-                    href="/discover"
-                    className="mt-4 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Clear all filters
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {sorted.length} {sorted.length === 1 ? "creator" : "creators"} found
-                  </p>
-                  <Suspense fallback={null}>
-                    <SortSelect />
-                  </Suspense>
-                </div>
-                <TalentGrid profiles={sorted} />
-              </>
-            )}
-          </main>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="font-display text-5xl tracking-tight text-white md:text-6xl">
+            The Collective
+          </h1>
+          <p className="mt-3 text-base text-white/50">
+            Find the right creative professional for your next project.
+          </p>
         </div>
-      </PageContainer>
+
+        {/* Filter bar: pills + search | sort */}
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <Suspense fallback={<div className="h-8 w-64 rounded-full bg-white/5 animate-pulse" />}>
+            <RolePillFilters />
+          </Suspense>
+          <Suspense fallback={<div className="h-8 w-20 rounded-full bg-white/5 animate-pulse" />}>
+            <PriceFilter />
+          </Suspense>
+          <div className="ml-auto shrink-0">
+            <Suspense fallback={null}>
+              <SortSelect />
+            </Suspense>
+          </div>
+        </div>
+
+        {/* Results */}
+        {sorted.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/[0.02] py-20 text-center backdrop-blur-sm">
+            <p className="text-lg font-medium text-white/80">No talent found</p>
+            <p className="mt-1 text-sm text-white/40">
+              {hasFilters ? "Try broadening your filters." : "No discoverable profiles yet."}
+            </p>
+            {hasFilters && (
+              <Link
+                href="/discover"
+                className="mt-4 text-sm font-medium text-[#8B5CF6] hover:text-[#a78bfa] transition-colors"
+              >
+                Clear all filters
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="mb-4 text-sm text-white/40">
+              {sorted.length} {sorted.length === 1 ? "creator" : "creators"}
+            </p>
+            <TalentGrid profiles={sorted} />
+          </>
+        )}
+      </div>
 
       {sorted.length > 0 && <AIConcierge profiles={sorted} />}
     </div>

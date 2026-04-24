@@ -12,7 +12,7 @@ interface GlowButtonProps {
 export function GlowButton({ talentId, talentName, isAuthenticated }: GlowButtonProps) {
   return (
     <div className="relative w-full">
-      <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-brand to-brand/80 opacity-60 blur-md animate-glow" />
+      <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#a855f7] to-[#6366f1] opacity-60 blur-md animate-glow" />
       <div className="relative">
         <HireModal talentId={talentId} talentName={talentName} glowing isAuthenticated={isAuthenticated} />
       </div>
